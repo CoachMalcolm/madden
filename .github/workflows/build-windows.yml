@@ -28,6 +28,16 @@ jobs:
           Copy-Item kit/dist/MaddenRosterKit.exe $d/
           Copy-Item -Recurse kit/rosters, kit/data $d/
           Copy-Item kit/README.txt, CREDITS.md $d/
+          Copy-Item kit/input/sample_players.csv "$d/input/"
+          Push-Location $d
+          # Smoke test: the program must build a roster from the sample list and file it in a month folder.
+          "" | .\MaddenRosterKit.exe input\sample_players.csv SMOKE --no-copy
+          $ros = Get-ChildItem -Recurse output -Filter SMOKE.ros
+          if (-not $ros) { throw "Smoke test failed: no SMOKE.ros was built" }
+          Write-Host "Smoke test passed: $($ros.FullName) ($($ros.Length) bytes)"
+          Remove-Item -Recurse -Force output/*
+          Remove-Item input/sample_players.csv
+          Pop-Location
           Compress-Archive -Path $d -DestinationPath MaddenRosterKit-windows.zip
       - uses: actions/upload-artifact@v4
         with:
