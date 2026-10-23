@@ -1,0 +1,40 @@
+# Builds the one-file Windows program and the ready-to-unzip kit.
+# Runs when you push a tag like v1.0 (and attaches the zip to that release), or by hand from the Actions tab.
+name: Build Windows kit
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Build MaddenRosterKit.exe
+        working-directory: kit
+        run: |
+          python -m pip install pyinstaller==6.11.1
+          pyinstaller --onefile --console --name MaddenRosterKit --paths . --paths lib madden_kit.py
+      - name: Package the kit
+        shell: pwsh
+        run: |
+          $d = "MaddenRosterKit"
+          New-Item -ItemType Directory $d, "$d/input", "$d/output" | Out-Null
+          Copy-Item kit/dist/MaddenRosterKit.exe $d/
+          Copy-Item -Recurse kit/rosters, kit/data $d/
+          Copy-Item kit/README.txt, CREDITS.md $d/
+          Compress-Archive -Path $d -DestinationPath MaddenRosterKit-windows.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: MaddenRosterKit-windows
+          path: MaddenRosterKit-windows.zip
+      - name: Attach to the release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: MaddenRosterKit-windows.zip

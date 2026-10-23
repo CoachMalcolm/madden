@@ -1,11 +1,18 @@
 # Changelog
 
+## October 23, 2026 (night): Roster Kit release
+- New one-file Windows program, MaddenRosterKit.exe (built on GitHub; no Python needed).
+- One front door for every input: Google Sheets link, .xlsx, the tab CSVs, or an old v5 list.
+- Output goes into month folders (output\YYYYMM); older files are sorted in too.
+- Kit source, credits and the build recipe are in this repository.
+- Tested: link-free inputs all build a byte-identical roster to the known-good build.
+
 ## October 23, 2026 (evening): automatic script
 - Players always shows 10 empty rows below the last player; no menu needed.
 - Row colors follow the Settings cells by themselves (on open, and when you click back onto Players).
 - Number of squads also applies itself when the workbook opens.
 - Clone dropdowns reset themselves on open, after sorting, and when a Position or Clone is pasted.
-- Madden Tools menu trimmed to: Find a clone, Sort players, Clean up squads, Refresh everything.
+- Menu items renamed so each says what it does; new **What do these do?** item and a MADDEN TOOLS MENU section in READ ME FIRST. "Show 10 more rows" removed (automatic now).
 
 ## October 23, 2026: first release
 

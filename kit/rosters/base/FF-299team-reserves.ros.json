@@ -1,0 +1,610 @@
+[
+ {
+  "tgid": 268,
+  "city": "49ers A",
+  "nick": "Red/Gold/White",
+  "abbr": "SFA",
+  "borrows": "San Francisco 49ers",
+  "players": 53
+ },
+ {
+  "tgid": 269,
+  "city": "49ers B",
+  "nick": "Red/Gold/White",
+  "abbr": "SFB",
+  "borrows": "San Francisco 49ers",
+  "players": 53
+ },
+ {
+  "tgid": 270,
+  "city": "Bears A",
+  "nick": "Navy/Orng/White",
+  "abbr": "CHIA",
+  "borrows": "Chicago Bears",
+  "players": 53
+ },
+ {
+  "tgid": 271,
+  "city": "Bears B",
+  "nick": "Navy/Orng/White",
+  "abbr": "CHIB",
+  "borrows": "Chicago Bears",
+  "players": 53
+ },
+ {
+  "tgid": 272,
+  "city": "Bengals A",
+  "nick": "Orng/Black/White",
+  "abbr": "CINA",
+  "borrows": "Cincinnati Bengals",
+  "players": 53
+ },
+ {
+  "tgid": 273,
+  "city": "Bengals B",
+  "nick": "Orng/Black/White",
+  "abbr": "CINB",
+  "borrows": "Cincinnati Bengals",
+  "players": 53
+ },
+ {
+  "tgid": 274,
+  "city": "Bills A",
+  "nick": "Navy/Red/White",
+  "abbr": "BUFA",
+  "borrows": "Buffalo Bills",
+  "players": 53
+ },
+ {
+  "tgid": 275,
+  "city": "Bills B",
+  "nick": "Navy/Red/White",
+  "abbr": "BUFB",
+  "borrows": "Buffalo Bills",
+  "players": 53
+ },
+ {
+  "tgid": 276,
+  "city": "Broncos A",
+  "nick": "Orng/Navy/White",
+  "abbr": "DENA",
+  "borrows": "Denver Broncos",
+  "players": 53
+ },
+ {
+  "tgid": 277,
+  "city": "Broncos B",
+  "nick": "Orng/Navy/White",
+  "abbr": "DENB",
+  "borrows": "Denver Broncos",
+  "players": 53
+ },
+ {
+  "tgid": 278,
+  "city": "Browns A",
+  "nick": "Brown/Orng/White",
+  "abbr": "CLEA",
+  "borrows": "Cleveland Browns",
+  "players": 53
+ },
+ {
+  "tgid": 279,
+  "city": "Browns B",
+  "nick": "Brown/Orng/White",
+  "abbr": "CLEB",
+  "borrows": "Cleveland Browns",
+  "players": 53
+ },
+ {
+  "tgid": 280,
+  "city": "Buccaneers A",
+  "nick": "Red/Pewter/Black",
+  "abbr": "TBA",
+  "borrows": "Tampa Bay Buccaneers",
+  "players": 53
+ },
+ {
+  "tgid": 281,
+  "city": "Buccaneers B",
+  "nick": "Red/Pewter/Black",
+  "abbr": "TBB",
+  "borrows": "Tampa Bay Buccaneers",
+  "players": 53
+ },
+ {
+  "tgid": 282,
+  "city": "Cardinals A",
+  "nick": "Red/Black/White",
+  "abbr": "ARIA",
+  "borrows": "Arizona Cardinals",
+  "players": 53
+ },
+ {
+  "tgid": 283,
+  "city": "Cardinals B",
+  "nick": "Red/Black/White",
+  "abbr": "ARIB",
+  "borrows": "Arizona Cardinals",
+  "players": 53
+ },
+ {
+  "tgid": 284,
+  "city": "Chargers A",
+  "nick": "Navy/Gold/Powder",
+  "abbr": "SDA",
+  "borrows": "San Diego Chargers",
+  "players": 53
+ },
+ {
+  "tgid": 285,
+  "city": "Chargers B",
+  "nick": "Navy/Gold/Powder",
+  "abbr": "SDB",
+  "borrows": "San Diego Chargers",
+  "players": 53
+ },
+ {
+  "tgid": 286,
+  "city": "Chiefs A",
+  "nick": "Red/Gold/White",
+  "abbr": "KCA",
+  "borrows": "Kansas City Chiefs",
+  "players": 53
+ },
+ {
+  "tgid": 287,
+  "city": "Chiefs B",
+  "nick": "Red/Gold/White",
+  "abbr": "KCB",
+  "borrows": "Kansas City Chiefs",
+  "players": 53
+ },
+ {
+  "tgid": 288,
+  "city": "Colts A",
+  "nick": "Blue/White",
+  "abbr": "INDA",
+  "borrows": "Indianapolis Colts",
+  "players": 53
+ },
+ {
+  "tgid": 289,
+  "city": "Colts B",
+  "nick": "Blue/White",
+  "abbr": "INDB",
+  "borrows": "Indianapolis Colts",
+  "players": 53
+ },
+ {
+  "tgid": 290,
+  "city": "Cowboys A",
+  "nick": "Navy/Slvr/White",
+  "abbr": "DALA",
+  "borrows": "Dallas Cowboys",
+  "players": 53
+ },
+ {
+  "tgid": 291,
+  "city": "Cowboys B",
+  "nick": "Navy/Slvr/White",
+  "abbr": "DALB",
+  "borrows": "Dallas Cowboys",
+  "players": 53
+ },
+ {
+  "tgid": 292,
+  "city": "Dolphins A",
+  "nick": "Aqua/Orng/Navy",
+  "abbr": "MIAA",
+  "borrows": "Miami Dolphins",
+  "players": 53
+ },
+ {
+  "tgid": 293,
+  "city": "Dolphins B",
+  "nick": "Aqua/Orng/Navy",
+  "abbr": "MIAB",
+  "borrows": "Miami Dolphins",
+  "players": 53
+ },
+ {
+  "tgid": 294,
+  "city": "Eagles A",
+  "nick": "Grn/Silver/Black",
+  "abbr": "PHIA",
+  "borrows": "Philadelphia Eagles",
+  "players": 53
+ },
+ {
+  "tgid": 295,
+  "city": "Eagles B",
+  "nick": "Grn/Silver/Black",
+  "abbr": "PHIB",
+  "borrows": "Philadelphia Eagles",
+  "players": 53
+ },
+ {
+  "tgid": 296,
+  "city": "Falcons A",
+  "nick": "Black/Red/Silver",
+  "abbr": "ATLA",
+  "borrows": "Atlanta Falcons",
+  "players": 53
+ },
+ {
+  "tgid": 297,
+  "city": "Falcons B",
+  "nick": "Black/Red/Silver",
+  "abbr": "ATLB",
+  "borrows": "Atlanta Falcons",
+  "players": 53
+ },
+ {
+  "tgid": 298,
+  "city": "Giants A",
+  "nick": "Blue/Red/White",
+  "abbr": "NYGA",
+  "borrows": "New York Giants",
+  "players": 53
+ },
+ {
+  "tgid": 299,
+  "city": "Giants B",
+  "nick": "Blue/Red/White",
+  "abbr": "NYGB",
+  "borrows": "New York Giants",
+  "players": 53
+ },
+ {
+  "tgid": 300,
+  "city": "Jaguars A",
+  "nick": "Teal/Black/Gold",
+  "abbr": "JAXA",
+  "borrows": "Jacksonville Jaguars",
+  "players": 53
+ },
+ {
+  "tgid": 301,
+  "city": "Jaguars B",
+  "nick": "Teal/Black/Gold",
+  "abbr": "JAXB",
+  "borrows": "Jacksonville Jaguars",
+  "players": 53
+ },
+ {
+  "tgid": 302,
+  "city": "Jets A",
+  "nick": "Green/White",
+  "abbr": "NYJA",
+  "borrows": "New York Jets",
+  "players": 53
+ },
+ {
+  "tgid": 303,
+  "city": "Jets B",
+  "nick": "Green/White",
+  "abbr": "NYJB",
+  "borrows": "New York Jets",
+  "players": 53
+ },
+ {
+  "tgid": 304,
+  "city": "Lions A",
+  "nick": "Blue/Silver/Blk",
+  "abbr": "DETA",
+  "borrows": "Detroit Lions",
+  "players": 53
+ },
+ {
+  "tgid": 305,
+  "city": "Lions B",
+  "nick": "Blue/Silver/Blk",
+  "abbr": "DETB",
+  "borrows": "Detroit Lions",
+  "players": 53
+ },
+ {
+  "tgid": 306,
+  "city": "Packers A",
+  "nick": "Green/Gold/White",
+  "abbr": "GBA",
+  "borrows": "Green Bay Packers",
+  "players": 53
+ },
+ {
+  "tgid": 307,
+  "city": "Packers B",
+  "nick": "Green/Gold/White",
+  "abbr": "GBB",
+  "borrows": "Green Bay Packers",
+  "players": 53
+ },
+ {
+  "tgid": 308,
+  "city": "Panthers A",
+  "nick": "Blk/Blue/Silver",
+  "abbr": "CARA",
+  "borrows": "Carolina Panthers",
+  "players": 53
+ },
+ {
+  "tgid": 309,
+  "city": "Panthers B",
+  "nick": "Blk/Blue/Silver",
+  "abbr": "CARB",
+  "borrows": "Carolina Panthers",
+  "players": 53
+ },
+ {
+  "tgid": 310,
+  "city": "Patriots A",
+  "nick": "Navy/Red/Silver",
+  "abbr": "NEA",
+  "borrows": "New England Patriots",
+  "players": 53
+ },
+ {
+  "tgid": 311,
+  "city": "Patriots B",
+  "nick": "Navy/Red/Silver",
+  "abbr": "NEB",
+  "borrows": "New England Patriots",
+  "players": 53
+ },
+ {
+  "tgid": 312,
+  "city": "Raiders A",
+  "nick": "Silver/Black",
+  "abbr": "OAKA",
+  "borrows": "Oakland Raiders",
+  "players": 53
+ },
+ {
+  "tgid": 313,
+  "city": "Raiders B",
+  "nick": "Silver/Black",
+  "abbr": "OAKB",
+  "borrows": "Oakland Raiders",
+  "players": 53
+ },
+ {
+  "tgid": 314,
+  "city": "Rams A",
+  "nick": "Navy/Gold/White",
+  "abbr": "STLA",
+  "borrows": "St. Louis Rams",
+  "players": 53
+ },
+ {
+  "tgid": 315,
+  "city": "Rams B",
+  "nick": "Navy/Gold/White",
+  "abbr": "STLB",
+  "borrows": "St. Louis Rams",
+  "players": 53
+ },
+ {
+  "tgid": 316,
+  "city": "Ravens A",
+  "nick": "Purp/Black/Gold",
+  "abbr": "BALA",
+  "borrows": "Baltimore Ravens",
+  "players": 53
+ },
+ {
+  "tgid": 317,
+  "city": "Ravens B",
+  "nick": "Purp/Black/Gold",
+  "abbr": "BALB",
+  "borrows": "Baltimore Ravens",
+  "players": 53
+ },
+ {
+  "tgid": 318,
+  "city": "Redskins A",
+  "nick": "Burg/Gold/White",
+  "abbr": "WASA",
+  "borrows": "Washington Redskins",
+  "players": 53
+ },
+ {
+  "tgid": 319,
+  "city": "Redskins B",
+  "nick": "Burg/Gold/White",
+  "abbr": "WASB",
+  "borrows": "Washington Redskins",
+  "players": 53
+ },
+ {
+  "tgid": 320,
+  "city": "Saints A",
+  "nick": "Gold/Black/White",
+  "abbr": "NOA",
+  "borrows": "New Orleans Saints",
+  "players": 53
+ },
+ {
+  "tgid": 321,
+  "city": "Saints B",
+  "nick": "Gold/Black/White",
+  "abbr": "NOB",
+  "borrows": "New Orleans Saints",
+  "players": 53
+ },
+ {
+  "tgid": 322,
+  "city": "Seahawks A",
+  "nick": "Navy/Grn/Silver",
+  "abbr": "SEAA",
+  "borrows": "Seattle Seahawks",
+  "players": 53
+ },
+ {
+  "tgid": 323,
+  "city": "Seahawks B",
+  "nick": "Navy/Grn/Silver",
+  "abbr": "SEAB",
+  "borrows": "Seattle Seahawks",
+  "players": 53
+ },
+ {
+  "tgid": 324,
+  "city": "Steelers A",
+  "nick": "Black/Gold/White",
+  "abbr": "PITA",
+  "borrows": "Pittsburgh Steelers",
+  "players": 56
+ },
+ {
+  "tgid": 325,
+  "city": "Steelers B",
+  "nick": "Black/Gold/White",
+  "abbr": "PITB",
+  "borrows": "Pittsburgh Steelers",
+  "players": 56
+ },
+ {
+  "tgid": 326,
+  "city": "Texans A",
+  "nick": "Navy/Red/White",
+  "abbr": "HOUA",
+  "borrows": "Houston Texans",
+  "players": 53
+ },
+ {
+  "tgid": 327,
+  "city": "Texans B",
+  "nick": "Navy/Red/White",
+  "abbr": "HOUB",
+  "borrows": "Houston Texans",
+  "players": 53
+ },
+ {
+  "tgid": 328,
+  "city": "Titans A",
+  "nick": "Navy/LtBlue/Red",
+  "abbr": "TENA",
+  "borrows": "Tennessee Titans",
+  "players": 53
+ },
+ {
+  "tgid": 329,
+  "city": "Titans B",
+  "nick": "Navy/LtBlue/Red",
+  "abbr": "TENB",
+  "borrows": "Tennessee Titans",
+  "players": 53
+ },
+ {
+  "tgid": 330,
+  "city": "Vikings A",
+  "nick": "Purp/Gold/White",
+  "abbr": "MINA",
+  "borrows": "Minnesota Vikings",
+  "players": 53
+ },
+ {
+  "tgid": 331,
+  "city": "Vikings B",
+  "nick": "Purp/Gold/White",
+  "abbr": "MINB",
+  "borrows": "Minnesota Vikings",
+  "players": 53
+ },
+ {
+  "tgid": 332,
+  "city": "Admirals A",
+  "nick": "Blue/Orng/Green",
+  "abbr": "ADMA",
+  "borrows": "Amsterdam Admirals",
+  "players": 43
+ },
+ {
+  "tgid": 333,
+  "city": "Admirals B",
+  "nick": "Blue/Orng/Green",
+  "abbr": "ADMB",
+  "borrows": "Amsterdam Admirals",
+  "players": 43
+ },
+ {
+  "tgid": 334,
+  "city": "Centurions A",
+  "nick": "Red/Black/Silver",
+  "abbr": "CENA",
+  "borrows": "Cologne Centurions",
+  "players": 47
+ },
+ {
+  "tgid": 335,
+  "city": "Centurions B",
+  "nick": "Red/Black/Silver",
+  "abbr": "CENB",
+  "borrows": "Cologne Centurions",
+  "players": 47
+ },
+ {
+  "tgid": 336,
+  "city": "Fire A",
+  "nick": "Maroon/Blk/Gold",
+  "abbr": "FIRA",
+  "borrows": "Rhein Fire",
+  "players": 45
+ },
+ {
+  "tgid": 337,
+  "city": "Fire B",
+  "nick": "Maroon/Blk/Gold",
+  "abbr": "FIRB",
+  "borrows": "Rhein Fire",
+  "players": 45
+ },
+ {
+  "tgid": 338,
+  "city": "Galaxy A",
+  "nick": "Purple/Orange",
+  "abbr": "GALA",
+  "borrows": "Frankfurt Galaxy",
+  "players": 43
+ },
+ {
+  "tgid": 339,
+  "city": "Galaxy B",
+  "nick": "Purple/Orange",
+  "abbr": "GALB",
+  "borrows": "Frankfurt Galaxy",
+  "players": 43
+ },
+ {
+  "tgid": 340,
+  "city": "Sea Devils A",
+  "nick": "Navy/Teal/Red",
+  "abbr": "DEVA",
+  "borrows": "Hamburg Sea Devils",
+  "players": 43
+ },
+ {
+  "tgid": 341,
+  "city": "Sea Devils B",
+  "nick": "Navy/Teal/Red",
+  "abbr": "DEVB",
+  "borrows": "Hamburg Sea Devils",
+  "players": 43
+ },
+ {
+  "tgid": 342,
+  "city": "Thunder A",
+  "nick": "Blk/Grn/Orange",
+  "abbr": "THUA",
+  "borrows": "Berlin Thunder",
+  "players": 43
+ },
+ {
+  "tgid": 343,
+  "city": "Thunder B",
+  "nick": "Blk/Grn/Orange",
+  "abbr": "THUB",
+  "borrows": "Berlin Thunder",
+  "players": 43
+ }
+]

@@ -10,13 +10,13 @@ Put the people you played with and against into **Madden NFL 08 (PC)**. Each per
 |---|---|---|
 | Master Madden List v6 | Google Sheet: players, squads, rosters, matchups | [Make your own copy](https://docs.google.com/spreadsheets/d/1oWacpslQbD5xzF-0GAfb7CrIAhQ-AIoXba38ctx5G14/copy) |
 | Madden Tools | The workbook's menu (Apps Script). It comes with the copy. | Inside the workbook |
-| Madden Roster Kit | Folder on your PC that turns the workbook into a `.ros` roster file | Sent by Malcolm (not in this repo yet) |
+| Madden Roster Kit | Program for your PC that turns the workbook into a `.ros` roster file | [Download the latest](https://github.com/CoachMalcolm/madden/releases/latest) (`MaddenRosterKit-windows.zip`), or the source in `kit/` |
 | User Guide | Step-by-step help, 8 steps | `index.html` → the link above |
 
 ## What you need
 
 - Madden NFL 08 for PC with the **FF roster mod** (the kit's base roster is built for it; another mod can freeze the game at kickoff).
-- Python 3 (tick *Add python.exe to PATH* when installing). A no-install version is planned.
+- Nothing else: the Windows download is a single program. (Running from the `kit/` source instead needs Python 3.)
 - A Google account for your copy of the workbook.
 
 ## Limits worth knowing
@@ -28,9 +28,12 @@ Put the people you played with and against into **Madden NFL 08 (PC)**. Each per
 ## Files
 
 - `index.html`: the User Guide (GitHub Pages serves it).
+- `kit/`: the Roster Kit source (builder, base rosters, ratings data).
+- `.github/workflows/build-windows.yml`: builds `MaddenRosterKit.exe` and the download zip on GitHub.
+- `CREDITS.md`: whose rosters and tools this is built on.
 - `CHANGELOG.md`: what changed and when.
 - `.nojekyll`: tells GitHub Pages to serve the files as they are.
 
 ## Credits
 
-Made by Malcolm (Coach Malcolm) for the Madison and Glassboro crowd. Madden NFL 08 is © Electronic Arts; this project is a fan tool and is not affiliated with EA or the NFL.
+Made by Malcolm (Coach Malcolm) for the Madison and Glassboro crowd. Built on rosters made by others: see [CREDITS.md](CREDITS.md). Madden NFL 08 is © Electronic Arts; this project is a fan tool and is not affiliated with EA or the NFL.
