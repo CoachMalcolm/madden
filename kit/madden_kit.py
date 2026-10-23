@@ -281,7 +281,8 @@ def main(argv):
         code = run_builder(V6, [src, name] + flags)
     else:
         teams = os.path.join(INPUT, 'teams.csv')
-        code = run_builder(V5, [src, name] + (['--teams', teams] if os.path.exists(teams) else []) + flags)
+        v5flags = [f for f in flags if f in ('--check-only', '--allow-dupes', '--no-depth')]   # it never copies, so no --no-copy
+        code = run_builder(V5, [src, name] + (['--teams', teams] if os.path.exists(teams) else []) + v5flags)
     # File this build's roster and report in this month's folder.
     dest = month_dir()
     for f in glob.glob(os.path.join(OUT, name + '*')):
