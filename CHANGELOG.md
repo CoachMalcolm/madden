@@ -1,5 +1,12 @@
 # Changelog
 
+## October 23, 2026 (evening): automatic script
+- Players always shows 10 empty rows below the last player; no menu needed.
+- Row colors follow the Settings cells by themselves (on open, and when you click back onto Players).
+- Number of squads also applies itself when the workbook opens.
+- Clone dropdowns reset themselves on open, after sorting, and when a Position or Clone is pasted.
+- Madden Tools menu trimmed to: Find a clone, Sort players, Clean up squads, Refresh everything.
+
 ## October 23, 2026: first release
 
 **Workbook (Master Madden List v6)**
