@@ -19,6 +19,11 @@ import csv, datetime, glob, io, os, re, shutil, sys, urllib.request, zipfile
 from xml.sax.saxutils import escape
 
 FROZEN = getattr(sys, 'frozen', False)
+for _s in (sys.stdout, sys.stderr):                  # Windows consoles can't print every character
+    try:
+        _s.reconfigure(errors='replace')
+    except Exception:
+        pass
 KIT = os.path.dirname(os.path.abspath(sys.executable if FROZEN else __file__))
 os.environ['MADDEN_KIT'] = KIT                       # the builders read data and write output here
 sys.path.insert(0, os.path.join(KIT, 'lib'))
