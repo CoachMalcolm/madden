@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="How to put your own people into Madden NFL 08 on PC with the Master Madden List workbook and the Madden Roster Kit.">
+<title>Madison Madden User Guide</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+a{color:var(--turf);font-weight:700}
+/* Layout: one readable column like a coach's binder; every topic = a plain summary, then fold-outs that open in place. */
+:root{
+  --bg:#f6f7f3; --paper:#ffffff; --ink:#1b2219; --muted:#5b6658; --line:#d9ddd2;
+  --turf:#2f5d3a; --turf-soft:#e6efe5; --chalk:#b8860b; --warn-bg:#fbefe0; --warn:#8a4b08;
+  --code-bg:#eef1ea;
+  --display:"Barlow Condensed","Arial Narrow",Arial,sans-serif;
+  --body:"Atkinson Hyperlegible",Verdana,Arial,sans-serif;
+  --mono:"JetBrains Mono",Consolas,"Courier New",monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#121611; --paper:#1a2019; --ink:#e7ebe3; --muted:#a3ad9f; --line:#2f382d;
+  --turf:#8cc79a; --turf-soft:#1f2e22; --chalk:#e0b84f; --warn-bg:#2e2213; --warn:#f0b56a; --code-bg:#20281f; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#121611; --paper:#1a2019; --ink:#e7ebe3; --muted:#a3ad9f; --line:#2f382d;
+  --turf:#8cc79a; --turf-soft:#1f2e22; --chalk:#e0b84f; --warn-bg:#2e2213; --warn:#f0b56a; --code-bg:#20281f; color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.6;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 64px}
+.wrap{max-width:46rem;margin:0 auto;display:flex;flex-direction:column;gap:22px}
+header.top{display:flex;flex-direction:column;gap:6px;padding-bottom:14px;border-bottom:3px solid var(--turf)}
+.eyebrow{font-family:var(--display);letter-spacing:.12em;text-transform:uppercase;color:var(--turf);font-size:.95rem;font-weight:700}
+h1{font-family:var(--display);font-weight:700;font-size:2.6rem;line-height:1.05;margin:0;text-wrap:balance}
+h2{font-family:var(--display);font-weight:700;font-size:1.75rem;line-height:1.1;margin:0;text-wrap:balance}
+h3{font-family:var(--display);font-weight:600;font-size:1.3rem;margin:0}
+p{margin:0}
+.lead{font-size:1.1rem}
+.meta{color:var(--muted);font-size:.92rem}
+section.topic{background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:20px 20px 18px;display:flex;flex-direction:column;gap:12px}
+.yard{font-family:var(--mono);font-size:.8rem;color:var(--chalk);letter-spacing:.04em}
+.howto{display:flex;flex-direction:column;gap:12px}
+details.more{border-top:1px dashed var(--line);padding-top:10px}
+details.more>summary{cursor:pointer;list-style:none;color:var(--turf);font-weight:700;display:inline-flex;gap:8px;align-items:center;padding:4px 0}
+details.more>summary::-webkit-details-marker{display:none}
+details.more>summary::before{content:"▸";display:inline-block;transition:transform .15s}
+details.more[open]>summary::before{transform:rotate(90deg)}
+details.more>summary:focus-visible,button:focus-visible{outline:3px solid var(--chalk);outline-offset:2px;border-radius:3px}
+.inner{display:flex;flex-direction:column;gap:12px;padding:10px 0 4px 14px;border-left:3px solid var(--turf-soft);margin-top:6px}
+details.more details.more{border-top:none;padding-top:0}
+details.more details.more>summary{font-weight:600;font-size:.95rem}
+.hide{align-self:flex-start;background:none;border:1px solid var(--line);color:var(--muted);font:inherit;font-size:.88rem;padding:3px 10px;border-radius:4px;cursor:pointer}
+.hide:hover{color:var(--ink);border-color:var(--muted)}
+ul,ol{margin:0;padding-left:1.3rem;display:flex;flex-direction:column;gap:6px}
+code,.mono{font-family:var(--mono);font-size:.86em;background:var(--code-bg);padding:1px 5px;border-radius:3px;overflow-wrap:anywhere}
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:.93rem;font-variant-numeric:tabular-nums}
+th,td{text-align:left;padding:7px 9px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:var(--display);font-weight:600;letter-spacing:.03em;font-size:1rem;color:var(--muted)}
+.callout{background:var(--warn-bg);color:var(--ink);border-radius:5px;padding:12px 14px;display:flex;flex-direction:column;gap:6px}
+.callout strong{color:var(--warn)}
+.proof{font-size:.93rem;color:var(--muted)}
+.tools{display:flex;gap:10px;flex-wrap:wrap}
+.tools button{background:var(--turf);color:var(--paper);border:0;border-radius:4px;padding:6px 12px;font:inherit;font-size:.9rem;cursor:pointer}
+.tools button.alt{background:none;color:var(--turf);border:1px solid var(--turf)}
+@media (max-width:480px){h1{font-size:2.1rem}section.topic{padding:16px 14px}}
+@media (prefers-reduced-motion:reduce){details.more>summary::before{transition:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="top">
+  <span class="eyebrow">Madison Madden 08 · User Guide</span>
+  <h1>Put your people in Madden 08</h1>
+  <p class="lead">Short steps, one at a time. Each step has a <strong>Learn more</strong> line if you want the detail. It opens right here, and <strong>Hide</strong> folds it away. Nothing opens a new window.</p>
+  <p class="meta">For the Master Madden List workbook and the Madden Roster Kit · Updated October 23, 2026</p>
+  <div class="tools"><button type="button" id="openAll">Open every section</button><button type="button" class="alt" id="closeAll">Close every section</button></div>
+</header>
+
+<section class="topic">
+  <span class="yard">START HERE</span>
+  <h2>What you can do</h2>
+  <p>Add people you played with or against. Give each one the ratings of an NFL great. Put them on squads. Build a roster file and play them in Madden NFL 08 on your PC.</p>
+  <details class="more"><summary>Learn more: how the pieces fit</summary><div class="inner">
+    <ol>
+      <li><strong>The workbook</strong> (a Google Sheet) holds your people and squads.</li>
+      <li><strong>The Roster Kit</strong> (a folder on your PC) turns the workbook into a roster file.</li>
+      <li><strong>Madden 08</strong> loads that roster file.</li>
+    </ol>
+    <p>Each person is a <em>clone</em>: an exact copy of one NFL player's ratings from one season, with your person's name and number on it.</p>
+    <button type="button" class="hide">▴ Hide</button>
+  </div></details>
+</section>
+
+<section class="topic">
+  <span class="yard">STEP 1 · ONE TIME</span>
+  <h2>Get set up</h2>
+  <ol>
+    <li>Make your own copy of the workbook: open <a href="https://docs.google.com/spreadsheets/d/1oWacpslQbD5xzF-0GAfb7CrIAhQ-AIoXba38ctx5G14/copy">the Master Madden List</a> and click <strong>Make a copy</strong>. It lands in your own Google Drive.</li>
+    <li>Unzip the <strong>Madden Roster Kit</strong> to <span class="mono">C:\MaddenRosterKit</span>.</li>
+  </ol>
+  <details class="more"><summary>Learn more: what the PC needs</summary><div class="inner">
+    <ul>
+      <li>Madden NFL 08 for PC, with the same roster mod the kit was made for (the FF mod). A different mod can freeze the game at kickoff.</li>
+      <li>Python 3 from python.org. When you install it, tick <strong>Add python.exe to PATH</strong>. (A version that needs no install is on the way.)</li>
+    </ul>
+    <button type="button" class="hide">▴ Hide</button>
+  </div></details>
+  <details class="more"><summary>Learn more: the locks</summary><div class="inner">
+    <p>Most of the workbook is locked so nothing breaks by accident. You can type only in the open cells. If something won't let you type, it's meant to be filled in automatically.</p>
+    <p>Tip for the owner: do everyday editing from a second Google account with Editor access. The owner's account skips every lock.</p>
+    <button type="button" class="hide">▴ Hide</button>
+  </div></details>
+</section>
+
+<section class="topic">
+  <span class="yard">STEP 2 · PLAYERS TAB</span>
+  <h2>Add a player</h2>
+  <ol>
+    <li>Type the <strong>first and last name</strong> (columns B and C).</li>
+    <li>Pick the <strong>Position</strong> (F). Do this <em>before</em> the clone.</li>
+    <li>Pick the <strong>Clone</strong> (I): click the arrow and type part of a name.</li>
+    <li>Check <strong>Clone check</strong> (J). <strong>OK</strong> means he's ready.</li>
+    <li>Pick where he <strong>made his bones</strong> (H) and his <strong>Skin tone</strong> (N).</li>
+  </ol>
+  <details class="more"><summary>Learn more: every column</summary><div class="inner">
+    <div class="tbl"><table>
+      <tr><th>Col</th><th>What goes there</th></tr>
+      <tr><td>B, C</td><td>First name (10 letters max), last name (12 max). Letters, space, period, apostrophe, hyphen.</td></tr>
+      <tr><td>D</td><td>The season his ratings are based on. 4 digits, or blank.</td></tr>
+      <tr><td>E</td><td>Jersey number 0–99. Blank = the clone's number.</td></tr>
+      <tr><td>F</td><td>Position. The clone list only shows players at this position.</td></tr>
+      <tr><td>G</td><td>Notes and nicknames. Nothing here changes the game.</td></tr>
+      <tr><td>H</td><td>Where he made his bones. This colors his row.</td></tr>
+      <tr><td>I, J</td><td>The clone, and the automatic check.</td></tr>
+      <tr><td>K, L</td><td>Who picked the clone, and where the info came from. Notes only.</td></tr>
+      <tr><td>M</td><td>His squads (Step 4).</td></tr>
+      <tr><td>N, O</td><td>Skin tone (Light, Medium, Dark) and affiliation.</td></tr>
+    </table></div>
+    <button type="button" class="hide">▴ Hide</button>
+  </div></details>
+  <details class="more"><summary>Learn more: finding the right clone</summary><div class="inner">
+    <p>Use <strong>Madden Tools › Find a clone</strong>. A panel opens on the right. Search by name, team, season, number or overall, or by two ratings such as Speed and Kick return. Click <strong>Use</strong> to put that clone on the row you've selected.</p>
+    <p>If the Clone check says <strong>MISMATCH</strong>, the clone plays a different position than the one in F. Change one of them.</p>
+    <button type="button" class="hide">▴ Hide</button>
+  </div></details>
+  <details class="more"><summary>Learn more: facts only</summary><div class="inner">
+    <p>If you don't know something, leave it blank or write Unknown. Don't guess.</p>
+    <button type="button" class="hide">▴ Hide</button>
+  </div></details>
+</section>
+
+<section class="topic">
+  <span class="yard">STEP 3 · BUILD YOUR SQUADS TAB</span>
+  <h2>Make a squad</h2>
+  <ol>
+    <li>At the top, set <strong>Number of squads</strong> (1 to 32).</li>
+    <li>On a squad's row, type its <strong>name</strong>.</li>
+    <li>Under <strong>Replaces</strong>, pick a <strong>reserve slot</strong> such as <em>Broncos A</em>.</li>
+    <li>If you like, type the <strong>city</strong> and <strong>nickname</strong> the game will show.</li>
+  </ol>
+  <details class="more"><summary>Learn more: what "Replaces" means</summary><div class="inner">
+    <p>Your squad takes over one team slot in the game. Pick a <strong>reserve slot</strong> (Broncos A, Raiders B, Admirals A …) and every real NFL team stays in the game. Your squad wears that team's uniforms, logo and stadium.</p>
+    <p>In the game's team select, your squad shows up under the team it borrows from (Broncos A is under BRONCOS), with your nickname.</p>
+    <p>You can pick a <strong>real</strong> team instead. It turns red, and you're asked first, because that team won't be in the roster you build.</p>
+    <p>Two squads can't take the same team. The sheet turns dark red and won't allow it.</p>
+    <button type="button" class="hide">▴ Hide</button>
+  </div></details>
+  <details class="more"><summary>Learn more: renaming a squad</summary><div class="inner">
+    <p>Type the new name over the old one. Every player on that squad moves to the new name automatically. The squad's chip color goes grey; Step 5 shows how to color it again.</p>
+    <p>No commas in squad names.</p>
+    <button type="button" class="hide">▴ Hide</button>
+  </div></details>
+</section>
+
+<section class="topic">
+  <span class="yard">STEP 4 · PLAYERS TAB, COLUMN M</span>
+  <h2>Put players on squads</h2>
+  <p>Click a player's <strong>Squads</strong> cell (column M) and pick every squad he plays on. One player can be on several squads, and he gets a copy on each.</p>
+  <details class="more"><summary>Learn more: the chips</summary><div class="inner">
+    <p>Each squad shows as a colored chip. Once a player has a squad, his Squads cell turns white so the chips are easy to read. The rest of his row keeps its color.</p>
+    <button type="button" class="hide">▴ Hide</button>
+  </div></details>
+</section>
+
+<section class="topic">
+  <span class="yard">STEP 5 · OPTIONAL</span>
+  <h2>Choose your colors</h2>
+  <p><strong>Rows:</strong> in Settings, color each "made their bones" place's cell the way you want its rows to look, then <strong>Madden Tools › Apply colors</strong>.<br><strong>Squad chips:</strong> click any Squads cell › Data › Data validation › the rule › pick a color next to the squad › Done.</p>
+  <details class="more"><summary>Learn more: row colors, step by step</summary><div class="inner">
+    <ol>
+      <li>Open <strong>Settings</strong>. Find the list under <em>Where they made their bones</em>.</li>
+      <li>Replace a name with one of your own places, if you like (Hometown, Little League, High School …).</li>
+      <li>Click that name's cell. Use the toolbar's <strong>Fill color</strong> and <strong>Text color</strong> buttons.</li>
+      <li><strong>Madden Tools › Apply colors.</strong> Every player from that place now has a row that looks the same.</li>
+    </ol>
+    <p>A plain white cell means no row color.</p>
+    <button type="button" class="hide">▴ Hide</button>
+  </div></details>
+  <details class="more"><summary>Learn more: why a renamed squad's chip goes grey</summary><div class="inner">
+    <p>Google keeps each chip color next to the squad's exact name. A new name starts grey. Grey is easy to read, so coloring it again is up to you.</p>
+    <button type="button" class="hide">▴ Hide</button>
+  </div></details>
+</section>
+
+<section class="topic">
+  <span class="yard">STEP 6 · ROSTERS TAB</span>
+  <h2>Check that your squads are ready</h2>
+  <p>Each squad has a card with its players and a colored bar. The same color shows in the Status column on Build Your Squads.</p>
+  <div class="tbl"><table>
+    <tr><th>Color</th><th>What it means</th></tr>
+    <tr><td>Green</td><td>Ready: full roster.</td></tr>
+    <tr><td>Blue</td><td>Ready: your players only. The other roster spots stay empty.</td></tr>
+    <tr><td>Orange</td><td>Will build. Positions you haven't filled get the replaced team's best player.</td></tr>
+    <tr><td>Grey</td><td>Empty. Skipped when building.</td></tr>
+    <tr><td>Red</td><td>Fix this first (over 55 players, no team picked, or two squads with the same name or team).</td></tr>
+  </table></div>
+  <details class="more"><summary>Learn more: the 26 required spots</summary><div class="inner">
+    <p>A squad needs 26 players at set positions to field a team: for example 1 QB, 3 WR, 2 DT, 3 CB, a kicker and a punter (Settings has the full list). If you're short at a position, the builder keeps the best player the replaced team has there. A squad can hold up to 55.</p>
+    <button type="button" class="hide">▴ Hide</button>
+  </div></details>
+  <details class="more"><summary>Learn more: Matchup tab</summary><div class="inner">
+    <p>Pick two squads to compare them position by position: what each needs, what each has, and each ready roster side by side.</p>
+    <button type="button" class="hide">▴ Hide</button>
+  </div></details>
+</section>
+
+<section class="topic">
+  <span class="yard">STEP 7 · ON YOUR PC</span>
+  <h2>Build the roster</h2>
+  <ol>
+    <li>In the workbook: <strong>File › Download › Microsoft Excel (.xlsx)</strong>.</li>
+    <li>Drag the downloaded file onto <span class="mono">C:\MaddenRosterKit\BUILD_ROSTER.bat</span>.</li>
+    <li>Type a short name: letters and numbers, 8 or fewer, no spaces (like <span class="mono">GAMEDAY1</span>).</li>
+    <li>Wait for <strong>Done</strong>. It takes about a minute.</li>
+  </ol>
+  <details class="more"><summary>Learn more: where the files go</summary><div class="inner">
+    <p>The roster is copied straight into <span class="mono">Documents\Madden NFL 08\Rosters</span>, ready to load. A copy and a report stay in the kit's <span class="mono">output</span> folder. The report lists every squad, who was added, and anything to fix.</p>
+    <p>If a roster with the same name is already in the Rosters folder, it's replaced. Use a new name to keep older ones.</p>
+    <button type="button" class="hide">▴ Hide</button>
+  </div></details>
+  <details class="more"><summary>Learn more: if it says "Nothing was built"</summary><div class="inner">
+    <p>Read the lines above that message. Each one names the squad or player and what to change. The common ones:</p>
+    <ul>
+      <li><strong>Pick the team it replaces:</strong> a squad with players has no team under Replaces.</li>
+      <li><strong>Both replace the same team:</strong> give one of them another team.</li>
+      <li><strong>Over the 55 limit:</strong> take some players off that squad.</li>
+      <li><strong>Clone plays a different position:</strong> fix the Position or the Clone on that row.</li>
+      <li><strong>Could not find FF-299team-reserves.ros:</strong> the kit folder is incomplete. Unzip the full kit again.</li>
+    </ul>
+    <p>Fix them in the workbook, download again, and build again.</p>
+    <button type="button" class="hide">▴ Hide</button>
+  </div></details>
+</section>
+
+<section class="topic">
+  <span class="yard">STEP 8 · IN THE GAME</span>
+  <h2>Play it</h2>
+  <ol>
+    <li>Start Madden 08.</li>
+    <li><strong>Main Menu › Menu › Files › Load</strong>, and pick your roster name.</li>
+    <li>In team select, find your squad under the team it borrows from.</li>
+  </ol>
+  <details class="more"><summary>Learn more: if the game quits before the coin toss</summary><div class="inner">
+    <p>The most common cause is a PC whose Madden mod doesn't match the kit's. Load one of the kit's tested rosters first; if that also quits, the mod is different. Ask the person who sent you the kit.</p>
+    <button type="button" class="hide">▴ Hide</button>
+  </div></details>
+</section>
+
+</div>
+<script>
+document.addEventListener('click', function (e) {
+  var b = e.target.closest('.hide');
+  if (!b) return;
+  var d = b.closest('details');
+  if (!d) return;
+  d.open = false;
+  var s = d.querySelector('summary');
+  if (s) { s.focus({ preventScroll: true }); var r = s.getBoundingClientRect(); if (r.top < 0 || r.top > window.innerHeight) s.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
+});
+function setAll(open){ document.querySelectorAll('details.more').forEach(function(d){ d.open = open; }); }
+document.getElementById('openAll').addEventListener('click', function(){ setAll(true); });
+document.getElementById('closeAll').addEventListener('click', function(){ setAll(false); });
+</script>
+</body>
+</html>
