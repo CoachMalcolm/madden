@@ -136,7 +136,7 @@ th{font-family:var(--display);font-weight:600;letter-spacing:.03em;font-size:1re
 
 <script>
 // Reads the Public Madden Lists catalog (a Google Sheet anyone can view). If it can't be reached, the cards above stay as they are.
-var CATALOG_ID = '';
+var CATALOG_ID = '1-bm0Z-3SiqbC9iagvHg4dvid2IGLleoRvSiE0v9XUgI';
 function esc(t){return String(t==null?'':t).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
 function rowsOf(r){return (r.table.rows||[]).map(function(x){return (x.c||[]).map(function(c){return c?(c.v==null?'':c.v):''})})}
 function catalog(r){
