@@ -86,7 +86,9 @@ def read_workbook(path):
         for k, c in enumerate(SQUAD_COLS):
             squads.append(dict(slot=k + 1, name=get(c, 'name'), replaces=get(c, 'replaces'),
                                city=get(c, 'city'), nick=get(c, 'nick')))
-    head = {clean(v).lower(): col for (r, col), v in pl.items() if r == 0}
+    # Headings: row 1 in older workbooks, row 2 once row 1 holds the Show toggles. Find the row with "First Name".
+    hrow = min((r for (r, c), v in pl.items() if r < 5 and isinstance(v, str) and clean(v).lower().startswith('first name')), default=0)
+    head = {clean(v).lower(): col for (r, col), v in pl.items() if r == hrow}
 
     def col(prefix):
         for h, c in head.items():
@@ -101,7 +103,7 @@ def read_workbook(path):
         unknown = {}
     nrows = max(r for r, _ in pl) + 1
     players = []
-    for r in range(1, nrows):
+    for r in range(hrow + 1, nrows):
         g = lambda k: clean(pl.get((r, C[k]), ''))
         if not (g('first') or g('last')):
             continue
@@ -454,8 +456,10 @@ def main():
                 warns.append('%s is ticked for squad slot %d, which has no name; ignored.' % (who, k)); continue
             cu = p.get('custom')
             if cu and not allow[cu['type']]:
-                left_out.append('%s on %s: %s players are switched off on Build Your Squads' % (
-                    who, squads[k - 1]['name'], 'B (edited clone)' if cu['type'] == 'B' else 'C (from scratch)')); continue
+                t = cu['type']
+                left_out.append('%s on %s: NOT BUILT. He is %s and Allow %s is off on Build Your Squads. '
+                                'Replace him on that squad, or tick Allow %s.' % (
+                    who, squads[k - 1]['name'], 'B (edited clone)' if t == 'B' else 'C (from scratch)', t, t)); continue
             scratch = bool(cu and cu['type'] == 'C')
             if not p['check'].upper().startswith('OK') or not (p['clone'] or scratch):
                 skipped.append('%s on %s: no valid clone yet' % (who, squads[k - 1]['name'])); continue
@@ -515,7 +519,7 @@ def main():
     blocking = [e for e in errors if a.allow_dupes is False or not e.startswith('SAME NAME')]
     for head, items in (('SQUADS SKIPPED (nothing to build yet)', skipped_squads),
                         ('SKIPPED (pick a clone to include them)', skipped),
-                        ('LEFT OUT (switched off on Build Your Squads)', left_out), ('WARNINGS', warns),
+                        ('LEFT OUT: NOT ALLOWED (Build Your Squads toggles)', left_out), ('WARNINGS', warns),
                         ('OP PLAYERS (a rating over %d)' % settings['op'], op_hits), ('ERRORS (fix before building)', errors)):
         if items:
             say(); say('%s: %d' % (head, len(items)))
