@@ -1057,8 +1057,8 @@ function refreshCustomSheet() {
     }
     notes.push(rowNotes);
   });
-  cs.getRange(CUSTOM_FIRST, CUSTOM_HEAD.length - 2, n, 1).setValues(ovrCol);   // AC Overall
-  cs.getRange(CUSTOM_FIRST, CUSTOM_HEAD.length, n, 1).setValues(topCol);       // AE Top rating
+  cs.getRange(CUSTOM_FIRST, CUSTOM_HEAD.length - 2, n, 1).setValues(ovrCol).setNumberFormat('0');   // AC Overall
+  cs.getRange(CUSTOM_FIRST, CUSTOM_HEAD.length, n, 1).setValues(topCol).setNumberFormat('0');   // AE Top rating
   cs.getRange(CUSTOM_FIRST, 6, n, map.length).setNotes(notes);                 // F..AB
 }
 

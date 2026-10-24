@@ -541,7 +541,7 @@ def main():
             roster[k].append((p, e))
             hits = op_list(e, settings['op'])
             if hits:
-                op_hits.append('%s (%s): %s' % (who, p['clone'], ', '.join(hits)))
+                op_hits.append('%s (%s): %s' % (who, p['clone'] or 'C, from scratch', ', '.join(hits)))
 
     plan = {}
     for s in live:
