@@ -35,7 +35,7 @@ BUILD FROM THE MASTER MADDEN LIST v6
      in the game: your squad wears that team's uniforms, logo and stadium. In the game's team select
      it appears under the team it borrows from (Broncos A > under BRONCOS), showing your nickname.
      Picking a real NFL team instead replaces that team (the sheet turns it red and asks first).
-  2. Players tab, column M (Squads): pick every squad each player is on. Several are allowed.
+  2. Players tab, column N (Squads): pick every squad each player is on. Several are allowed.
      Empty squads are skipped when building.
   3. File > Download > Microsoft Excel (.xlsx). Put the file in the "input" folder.
   4. Drag the .xlsx onto BUILD_ROSTER.bat (it also still takes the old .csv). Type a short name (SQUADS1). Done.

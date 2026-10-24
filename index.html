@@ -71,7 +71,7 @@ th{font-family:var(--display);font-weight:600;letter-spacing:.03em;font-size:1re
   <span class="eyebrow">Madison Madden 08 · User Guide</span>
   <h1>Put your people in Madden 08</h1>
   <p class="lead">Short steps, one at a time. Each step has a <strong>Learn more</strong> line if you want the detail. It opens right here, and <strong>Hide</strong> folds it away. Nothing opens a new window.</p>
-  <p class="meta">For the Master Madden List workbook and the Madden Roster Kit · Updated October 23, 2026</p>
+  <p class="meta">For the Master Madden List workbook and the Madden Roster Kit · Updated October 24, 2026</p>
   <div class="tools"><button type="button" id="openAll">Open every section</button><button type="button" class="alt" id="closeAll">Close every section</button></div>
 </header>
 
@@ -115,11 +115,11 @@ th{font-family:var(--display);font-weight:600;letter-spacing:.03em;font-size:1re
   <span class="yard">STEP 2 · PLAYERS TAB</span>
   <h2>Add a player</h2>
   <ol>
-    <li>Type the <strong>first and last name</strong> (columns B and C).</li>
-    <li>Pick the <strong>Position</strong> (F). Do this <em>before</em> the clone.</li>
-    <li>Pick the <strong>Clone</strong> (I): click the arrow and type part of a name.</li>
-    <li>Check <strong>Clone check</strong> (J). <strong>OK</strong> means he's ready.</li>
-    <li>Pick where he <strong>made his bones</strong> (H) and his <strong>Skin tone</strong> (N).</li>
+    <li>Type the <strong>first and last name</strong> (columns C and D).</li>
+    <li>Pick the <strong>Position</strong> (G). Do this <em>before</em> the clone.</li>
+    <li>Pick the <strong>Clone</strong> (J): click the arrow and type part of a name.</li>
+    <li>Check <strong>Clone check</strong> (K). <strong>OK</strong> means he's ready.</li>
+    <li>Pick where he <strong>made his bones</strong> (I) and his <strong>Skin tone</strong> (O).</li>
   </ol>
   <details class="more"><summary>Learn more: every column</summary><div class="inner">
     <div class="tbl"><table>
@@ -157,17 +157,23 @@ th{font-family:var(--display);font-weight:600;letter-spacing:.03em;font-size:1re
     <li><strong>C – From scratch.</strong> More involved. No clone needed: every number starts at the average NFL player at his position.</li>
   </ul>
   <p>Height, weight and skin tone come first, then the ratings that matter most for his position; the rest are folded under Other ratings. Press <strong>Save</strong> any time. Anything you don't change stays at the default.</p>
-  <p>Every player gets a <strong>Player type</strong> on Players (column P): <strong>A</strong> exact clone, <strong>B</strong> edited clone, <strong>C</strong> from scratch.</p>
+  <p>Every player gets a <strong>Player type</strong> on Players (column B): <strong>A</strong> exact clone, <strong>B</strong> edited clone, <strong>C</strong> from scratch.</p>
   <details class="more"><summary>Learn more: how his overall is worked out</summary><div class="inner">
     <p>The panel shows <strong>Overall about …</strong> as you type. It uses EA's own overall formula for each position, worked out from EA's rosters (it matches every EA player to within 1 point).</p>
     <p>For B, his clone's overall moves up or down by however much your changes move it. For C, it's worked out from all his numbers.</p>
     <p>His Clone check then reads <strong>OK: … (B, edited clone)</strong> or <strong>OK: … (C, from scratch)</strong>, and the Roster Kit builds him with your numbers.</p>
     <button type="button" class="hide">▴ Hide</button>
   </div></details>
-  <details class="more"><summary>Learn more: the switches</summary><div class="inner">
-    <p><strong>Players tab</strong> (top right): <strong>Show B</strong> and <strong>Show C</strong> hide or show those players on the list. Nothing else changes.</p>
-    <p><strong>Build Your Squads</strong> (row 2): <strong>Allow B</strong> and <strong>Allow C</strong>. Off means those players are left out: not counted, not on the Rosters cards, and not built. The replaced team fills their spots.</p>
+  <details class="more"><summary>Learn more: the toggles</summary><div class="inner">
+    <p><strong>Players tab</strong> (row 1, A1 and C1): <strong>Show B</strong> and <strong>Show C</strong> hide or show those players on the list. Nothing else changes.</p>
+    <p><strong>Build Your Squads</strong> (row 1, C1 and E1): <strong>Allow B</strong> and <strong>Allow C</strong>. Off means those players are not allowed: their position turns red on Build Your Squads, their Rosters card shows ⛔, a warning names them, and the Roster Kit leaves them out (the replaced team fills their spots).</p>
     <p><strong>Custom Players</strong>: the <strong>Show</strong> dropdown at the top shows only the ratings that matter for one group, like QBs or kickers.</p>
+    <button type="button" class="hide">▴ Hide</button>
+  </div></details>
+  <details class="more"><summary>Learn more: rating limits and OP</summary><div class="inner">
+    <p>Standard Madden is <strong>99</strong>. <strong>Settings B5</strong> is your limit for any rating (1 to 127; 127 is the most the game file holds).</p>
+    <p>Typing a rating above B5 is refused. A player who already has a higher number (brought in from a list with a higher limit, or because B5 was lowered) keeps it in the workbook, is flagged <strong>at limit</strong> (amber) and plays at B5.</p>
+    <p>Anyone who plays above 99 on his overall or any rating is flagged <strong>OP</strong> (purple) everywhere he shows up. EA's own 100s are exempt: Devin Hester 2007 (Speed) and the Madden 99/2000 100 overalls.</p>
     <button type="button" class="hide">▴ Hide</button>
   </div></details>
   <details class="more"><summary>Learn more: sharing him (Community Pool)</summary><div class="inner">
@@ -200,11 +206,23 @@ th{font-family:var(--display);font-weight:600;letter-spacing:.03em;font-size:1re
 </section>
 
 <section class="topic">
-  <span class="yard">STEP 4 · PLAYERS TAB, COLUMN M</span>
+  <span class="yard">STEP 4 · PLAYERS TAB, COLUMN N</span>
   <h2>Put players on squads</h2>
-  <p>Click a player's <strong>Squads</strong> cell (column M) and pick every squad he plays on. One player can be on several squads, and he gets a copy on each.</p>
+  <p>Click a player's <strong>Squads</strong> cell (column N) and pick every squad he plays on. One player can be on several squads, and he gets a copy on each.</p>
   <details class="more"><summary>Learn more: the chips</summary><div class="inner">
     <p>Each squad shows as a colored chip. Once a player has a squad, his Squads cell turns white so the chips are easy to read. The rest of his row keeps its color.</p>
+    <button type="button" class="hide">▴ Hide</button>
+  </div></details>
+</section>
+
+<section class="topic">
+  <span class="yard">OPTIONAL · ANOTHER LIST</span>
+  <h2>Move players between lists</h2>
+  <p><strong>Madden Tools › Migrate players to another list</strong> opens a panel. Pick a source (your list, the Master Madden List, or another list's link) and click <strong>Load players</strong>. Tick the ones you want on the <strong>Migration</strong> tab, then <strong>Add ticked</strong>. When you're done gathering, <strong>Migrate</strong> them to a new workbook or an existing one.</p>
+  <details class="more"><summary>Learn more: what moves with a player</summary><div class="inner">
+    <p>Everything on his Players row except his squads (squad names belong to each list, so you pick them again), plus his custom ratings if he's a B or C. His Source gets "Migrated from [list], [date]".</p>
+    <p>Each player is read again from his source at the moment you migrate, so you always get his latest details. Players already in the destination (same name and position) are skipped and listed, so nothing is doubled up.</p>
+    <p><strong>Ready for Migration</strong> can hold players from several lists at once. Tick ✓ Remove there and click <strong>Remove ticked from Ready</strong> to take someone off.</p>
     <button type="button" class="hide">▴ Hide</button>
   </div></details>
 </section>

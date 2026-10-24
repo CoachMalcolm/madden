@@ -1,11 +1,17 @@
 # Changelog
 
-## v1.0, October 24, 2026: player types, custom players and Community Pool
-- **Player types** (Players column P, automatic): **A – Exact clone**, **B – Edited clone** (a clone with some numbers changed), **C – From scratch** (no clone).
+## v1.0, October 24, 2026: new layout, player types, custom players, rating limits, migration
+- **New layout.** Players: Player type in column B; row 1 holds the Show toggles (A1 Show B, C1 Show C); headings in row 2; players in rows 3-1502 (Squads is now column N, Clone check K). Build Your Squads: row 1 holds the title and the Allow toggles (C1 Allow B, E1 Allow C); row 2 explains the tab; Number of squads is C3. Roster built before and after the change is byte-identical.
+- **Not allowed = red.** With Allow B or C off, those players' position cells turn red on Build Your Squads, their Rosters card shows ⛔, a pop-up names them, and the Roster Kit leaves them out with a NOT BUILT message.
+- **Rating limits and OP.** Settings B5 (1-127) is the most any rating can be: typing above it is refused; a number already above it is kept, flagged "at limit" (amber) and built at B5. Anyone playing above 99 (Settings B6) is flagged OP (purple) on Players, Custom Players, Rosters, Matchup, the panel and the kit report. EA's own 100s are exempt (Devin Hester 2007, Madden 99/2000 100 overalls). Weight up to 500 lbs (plays at most 415), age up to 99 (plays at most 63).
+- **Migrate players** panel: load players from your list, the Master Madden List or any list by link; tick, gather on Ready for Migration, then migrate to a new workbook (a copy of the blank Starter) or an existing one. Duplicates are skipped, squads cleared, Source notes where he came from.
+- **Lists.** Malcolm's Master Madden List v6 is now Malcolm's Madden List. New: Master Madden List (every player; the Community Pool lives here), Madison Madden List, GP's Madden List, Master Madden List Starter (blank). A lists page (lists.html) shows each with a description, player count and Make a copy.
+- Fixed: Build Your Squads squad numbers (=ROW()-5) after the new top row.
+- **Player types** (Players column B, automatic): **A – Exact clone**, **B – Edited clone** (a clone with some numbers changed), **C – From scratch** (no clone).
 - **Custom players.** Madden Tools › Create or edit a custom player opens a panel: B (quick) or C (more involved). Height, weight and skin tone first, then "Matter most for his position", then the other ratings folded away. Save any time; anything left alone stays at the default (his clone's number for B, the average NFL player at his position for C).
 - Overall ratings use EA's own formula per position, worked out from EA's 2003-2007 rosters (matches every EA player to within 1 point). B moves the clone's overall by the change; C is worked out from all his numbers.
 - **Custom Players** tab holds the numbers for B and C players, with a **Show** dropdown that shows only the ratings that matter for a group (QBs, linemen, kickers ...).
-- **Switches.** Players: Show B and Show C (hide or show those rows). Build Your Squads: Allow B and Allow C (off = not counted, not on Rosters cards, not built).
+- **Toggles.** Players: Show B and Show C (hide or show those rows). Build Your Squads: Allow B and Allow C.
 - **Community Pool.** Submit a player (emails Malcolm a code), Add a pool submission (Master only), Add a player from the Community Pool.
 - Roster Kit builds B and C players and lists anyone left out by a switch (tested; workbooks without custom players still build byte-identical rosters).
 
