@@ -884,6 +884,30 @@ function showCustomPanel() {
   SpreadsheetApp.getUi().showSidebar(html);
 }
 
+// Limits for custom numbers. Ratings: 0 to the Settings ratings cap (B5, 127 = the most the roster file holds).
+// Height/weight/age: what the roster file can hold, kept to sensible football sizes.
+var BODY_LIMITS = { HGT: [60, 90, 'Height (inches)'], WGT: [160, 400, 'Weight (lbs)'], AGE: [18, 50, 'Age'] };
+function customLimits() {
+  var cap = 127;
+  try { cap = Number(SpreadsheetApp.getActive().getSheetByName('Settings').getRange('B5').getValue()) || 127; } catch (e) {}
+  cap = Math.max(1, Math.min(127, Math.floor(cap)));
+  var lim = { cap: cap };
+  for (var k in BODY_LIMITS) lim[k] = BODY_LIMITS[k];
+  return lim;
+}
+// Returns a list of problems ('' = fine) for the numbers a user set.
+function customProblems(vals) {
+  var lim = customLimits(), bad = [];
+  for (var k in vals) {
+    var v = vals[k], n = Number(v), lo = 0, hi = lim.cap, name = CP.names[k] || k;
+    if (BODY_LIMITS[k]) { lo = BODY_LIMITS[k][0]; hi = BODY_LIMITS[k][1]; name = BODY_LIMITS[k][2]; }
+    else if (CP.keys.indexOf(k) < 0) { bad.push(k + ' is not a rating'); continue; }
+    if (String(v).trim() === '' || isNaN(n) || n !== Math.floor(n)) bad.push(name + ' must be a whole number (' + lo + '-' + hi + ')');
+    else if (n < lo || n > hi) bad.push(name + ' ' + n + ' is out of range: ' + lo + '-' + hi + (BODY_LIMITS[k] ? '' : ' (ratings cap on Settings)'));
+  }
+  return bad;
+}
+
 function customOvr(pos, v, capped) {
   var w = CP.model[pos], s = w[w.length - 1];
   for (var i = 0; i < CP.keys.length; i++) s += (Number(v[CP.keys[i]]) || 0) * w[i];
@@ -922,7 +946,7 @@ function getCustomContext() {
     }
   }
   return { ok: true, row: row, first: first, last: last, pos: pos, clone: clone, skin: skin,
-           cloneVals: cloneVals, saved: saved, cp: CP };
+           cloneVals: cloneVals, saved: saved, cp: CP, lim: customLimits() };
 }
 
 /** Save from the panel. vals holds only the numbers that differ from the default. */
@@ -935,6 +959,8 @@ function saveCustom(form) {
   if (!pos && form.pos) { pl.getRange(ctx.row, POS_COL).setValue(form.pos); pos = form.pos;
     pl.getRange(ctx.row, CLONE_COL).setDataValidation(ruleFor(pos, ctx.row, SpreadsheetApp.getActive().getSheetByName(LISTS))); }
   if (!pos) return { ok: false, msg: 'Pick his position first.' };
+  var bad = customProblems(form.vals || {});
+  if (bad.length) return { ok: false, msg: 'Not saved. Fix: ' + bad.join('; ') + '.' };
   if (form.type === 'B' && !ctx.cloneVals) return { ok: false, msg: 'B (edited clone) needs a clone in column J. Pick one, or choose C (from scratch).' };
   if (form.skin) pl.getRange(ctx.row, PC.skin).setValue(form.skin);
   var base = form.type === 'B' ? ctx.cloneVals : CP.avg[pos];
@@ -982,6 +1008,7 @@ var CUSTOM_HTML = String.raw`<!doctype html>
   .f{display:flex;align-items:center;gap:6px;margin:3px 0}
   .f label{flex:1}.f input,.f select{width:72px;padding:4px;font-size:14px}
   .f.chg label{font-weight:bold;color:#1f6f3a}
+  .f.bad label{font-weight:bold;color:#b00020}.f.bad input{border:2px solid #b00020;background:#fde7e9}
   .def{color:#999;font-size:11px;width:42px;text-align:right}
   .bar{position:sticky;top:0;background:#fff;padding:6px 0;border-bottom:1px solid #ddd;z-index:2;display:flex;gap:6px;align-items:center}
   button{padding:6px 12px;font-size:14px;cursor:pointer}
@@ -1003,7 +1030,10 @@ function ovr(){var p=pos();if(!p||!X.cp.model[p])return'';var b=base(),all={};fo
   function f(v,cap){var w=X.cp.model[p],s=w[w.length-1];X.cp.keys.forEach(function(k,i){s+=(+v[k]||0)*w[i]});return cap?Math.max(0,Math.min(99,Math.round(s))):s}
   return TYPE==='B'?Math.max(0,Math.min(99,Math.round(b.OVR+f(all,false)-f(b,false)))):f(all,true)}
 function upd(){var o=ovr();el('ovr').textContent=o===''?'':'Overall about '+o}
-function field(k,label,min,max){var b=base(),d=b?b[k]:'',v=VALS.hasOwnProperty(k)?VALS[k]:d;
+function lim(k){var L=X.lim||{cap:127};return L[k]?[L[k][0],L[k][1]]:[0,L.cap]}
+function badMsg(k,v){var r=lim(k),n=+v;if(String(v).trim()===''||isNaN(n)||n!==Math.floor(n)||n<r[0]||n>r[1])return (X.cp.names[k]||{WGT:'Weight',AGE:'Age',HGT:'Height'}[k]||k)+': '+r[0]+'-'+r[1]+(X.lim&&!X.lim[k]?' (ratings cap on Settings)':'');return ''}
+function problems(){var out=[];for(var k in VALS){var m=badMsg(k,VALS[k]);if(m)out.push(m)}return out}
+function field(k,label,min,max){var r=lim(k);min=r[0];max=r[1];var b=base(),d=b?b[k]:'',v=VALS.hasOwnProperty(k)?VALS[k]:d;
   return '<div class="f'+(VALS.hasOwnProperty(k)?' chg':'')+'" id="r_'+k+'"><label for="v_'+k+'">'+label+'</label><input id="v_'+k+'" type="number" min="'+min+'" max="'+max+'" value="'+v+'" data-k="'+k+'"><span class="def">'+(d===''||d===undefined?'':'was '+d)+'</span></div>'}
 function draw(){
   var c=X, p=pos(), h='<div class="who"><h3>'+c.first+' '+c.last+'</h3>'+(c.pos?c.pos:'No position yet')+(c.clone?' &middot; clone: '+c.clone:' &middot; no clone')+'</div>';
@@ -1030,13 +1060,13 @@ function draw(){
 function bind(){
   el('oB').onclick=function(){if(TYPE!=='B'){TYPE='B';VALS={};draw()}};el('oC').onclick=function(){if(TYPE!=='C'){TYPE='C';VALS={};draw()}};
   if(el('pos'))el('pos').onchange=function(){VALS={};draw()};
-  Array.prototype.forEach.call(document.querySelectorAll('input[data-k]'),function(i){i.oninput=function(){var k=i.dataset.k,d=base()[k];if(i.value===''||+i.value===d)delete VALS[k];else VALS[k]=+i.value;el('r_'+k).className='f'+(VALS.hasOwnProperty(k)?' chg':'');upd()}});
+  Array.prototype.forEach.call(document.querySelectorAll('input[data-k]'),function(i){i.oninput=function(){var k=i.dataset.k,d=base()[k];if(i.value===''||+i.value===d)delete VALS[k];else VALS[k]=+i.value;var bad=i.value!==''&&badMsg(k,i.value);el('r_'+k).className='f'+(bad?' bad':VALS.hasOwnProperty(k)?' chg':'');if(bad)say(bad,false);else if(!problems().length)say('',true);upd()}});
   if(el('hft')){var hh=function(){var v=+el('hft').value*12+ +el('hin').value;if(v===base().HGT)delete VALS.HGT;else VALS.HGT=v;upd()};el('hft').onchange=hh;el('hin').onchange=hh}
   if(el('rm'))el('rm').onclick=function(){say('Removing...',true);google.script.run.withSuccessHandler(function(r){say(r.msg,r.ok);load()}).removeCustom(X.row)}}
 function load(){say('',true);el('app').textContent='Loading...';google.script.run.withSuccessHandler(function(c){if(!c.ok){el('app').textContent='';say(c.msg,false);return}X=c;
   TYPE=c.saved?c.saved.type:(c.clone?'B':'C');VALS=c.saved?c.saved.vals:{};draw()}).withFailureHandler(function(e){say(e.message,false)}).getCustomContext()}
 el('reload').onclick=load;
-el('save').onclick=function(){if(!X)return;say('Saving...',true);
+el('save').onclick=function(){if(!X)return;var pr=problems();if(pr.length){say('Not saved. Fix the red boxes: '+pr.join('; '),false);return}say('Saving...',true);
   google.script.run.withSuccessHandler(function(r){say(r.msg,r.ok);if(r.ok)load()}).withFailureHandler(function(e){say(e.message,false)})
   .saveCustom({row:X.row,first:X.first,last:X.last,type:TYPE,vals:VALS,skin:el('skin')?el('skin').value:'',pos:pos()})};
 load();

@@ -127,7 +127,7 @@ def read_workbook(path):
                          '(misspelled, renamed, or past the Number of squads); left out. Players rows: %s'
                          % (len(lines), nm, ', '.join(map(str, lines[:12])) + (' ...' if len(lines) > 12 else '')))
     settings['allow'] = read_allow(sq)
-    custom = read_custom(wb, notes)
+    custom = read_custom(wb, notes, settings['cap'])
     for p in players:
         c = custom.get((p['first'].lower(), p['last'].lower(), p['pos']))
         if c:
@@ -150,7 +150,12 @@ CUSTOM_TAB = 'Custom Players'
 CUSTOM_FIELDS = {'height': 'HGT', 'weight': 'WGT', 'age': 'AGE'}
 
 
-def read_custom(wb, notes):
+CUSTOM_ERRORS = []
+CP_NAMES = json.load(open(os.path.join(KIT, 'data', 'custom_players.json')))['names']
+BODY_LIMITS = {'HGT': (60, 90, 'Height (inches)'), 'WGT': (160, 400, 'Weight (lbs)'), 'AGE': (18, 50, 'Age')}
+
+
+def read_custom(wb, notes, cap=127):
     """Custom Players tab (optional): one row per player whose ratings were set by hand.
     Type B = edited clone (his clone with some numbers changed); type C = from scratch (no clone).
     Blank cells keep the default (the clone's number for B, the average player at that position for C)."""
@@ -195,6 +200,12 @@ def read_custom(wb, notes):
             n = num(v, None)
             if n is None:
                 notes.append('Custom Players row %d (%s %s): "%s" is not a number for %s; using the default.' % (r + 1, first, last, v, key))
+                continue
+            lo, hi, label = BODY_LIMITS.get(key, (0, min(127, int(cap)), CP_NAMES.get(key, key)))
+            if n != int(n) or not lo <= n <= hi:
+                CUSTOM_ERRORS.append('Custom Players row %d (%s %s): %s is %s; it must be a whole number from %d to %d%s.'
+                                     % (r + 1, first, last, label, clean(v), lo, hi,
+                                        '' if key in BODY_LIMITS else ' (ratings cap on Settings)'))
                 continue
             vals[key] = n
         out[(first.lower(), last.lower(), pos)] = dict(type=kind, vals=vals, line=r + 1)
@@ -407,6 +418,7 @@ def main():
     errors, warns, skipped, op_hits, left_out = [], [], [], [], []
     allow = settings['allow']
     warns.extend(notes)
+    errors.extend(CUSTOM_ERRORS)
     live = [s for s in squads if s['name']]
     if not live:
         sys.exit('No squads are named on Build Your Squads (Squad name row).')
