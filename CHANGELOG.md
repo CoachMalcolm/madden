@@ -1,11 +1,11 @@
 # Changelog
 
-## October 23, 2026 (night): Roster Kit release
+## v1.0, October 23, 2026 (night): Roster Kit release
 - New one-file Windows program, MaddenRosterKit.exe (built on GitHub; no Python needed).
 - One front door for every input: Google Sheets link, .xlsx, the tab CSVs, or an old v5 list.
 - Output goes into month folders (output\YYYYMM); older files are sorted in too.
 - Kit source, credits and the build recipe are in this repository.
-- Tested: link-free inputs all build a byte-identical roster to the known-good build.
+- Tested: link-free inputs all build a byte-identical roster to the known-good build; the Windows program built a roster on a real PC that played in Madden 08.
 
 ## October 23, 2026 (evening): automatic script
 - Players always shows 10 empty rows below the last player; no menu needed.
