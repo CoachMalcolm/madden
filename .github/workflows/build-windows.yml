@@ -1,9 +1,11 @@
 # Builds the one-file Windows program and the ready-to-unzip kit.
-# Runs when you push a tag like v1.0 (and attaches the zip to that release), or by hand from the Actions tab.
+# Runs when a release is published (and attaches the zip to it), when a tag like v1.0 is pushed, or by hand from the Actions tab.
 name: Build Windows kit
 on:
   push:
     tags: ['v*']
+  release:
+    types: [published]
   workflow_dispatch:
 permissions:
   contents: write
@@ -51,7 +53,7 @@ jobs:
           name: MaddenRosterKit-windows
           path: MaddenRosterKit-windows.zip
       - name: Attach to the release
-        if: startsWith(github.ref, 'refs/tags/')
+        if: github.event_name == 'release' || startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
           files: MaddenRosterKit-windows.zip
