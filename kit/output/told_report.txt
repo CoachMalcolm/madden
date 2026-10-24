@@ -1,0 +1,70 @@
+MADDEN ROSTER BUILD: told  [OP]
+Workbook: t_old.xlsx   Base: FF-299team-reserves.ros
+
+  2000s                  replaces Broncos A              14 players, 17 open spots filled from Broncos A
+  1988-1990              replaces Redskins A             46 players,  6 open spots filled from Redskins A
+  Rowan                  replaces 49ers A                44 players,  4 open spots filled from 49ers A
+  Rivals                 replaces Raiders A               9 players, 19 open spots filled from Raiders A
+  Monica's Best          replaces Raiders B              23 players, 15 open spots filled from Raiders B
+  Dodge Field All Time   replaces Chiefs A               18 players, 13 open spots filled from Chiefs A
+
+SKIPPED (pick a clone to include them): 6
+  - Mike Savercool (?, row 110) on Monica's Best: no valid clone yet
+  - Shane Zander (RE, row 132) on 2000s: no valid clone yet
+  - Archie Acierno (MLB, row 134) on Rowan: no valid clone yet
+  - John Ahern (?, row 135) on Rowan: no valid clone yet
+  - Joseph Alves (?, row 137) on Rowan: no valid clone yet
+  - Bernard Mickens (FB, row 228) on Rivals: no valid clone yet
+
+WARNINGS: 8
+  - "2000s": #20 is used by Danny Rhodes, David Snell
+  - "1988-1990": #40 is used by Paul Blake, Scott Bronco
+  - "1988-1990": #44 is used by Brian Corea, Brian Corea, Adam Schell
+  - "1988-1990": #63 is used by Larry Thompson, Larry Thompson
+  - "Dodge Field All Time": #99 is used by Eggy Broome, Webby Piccolo
+  - "Dodge Field All Time": #1 is used by Darnell Evans, Mike Mantone
+  - "Dodge Field All Time": #3 is used by Robbie James, Robbie James, Magoo Sallie
+  - "Dodge Field All Time": #25 is used by Matt Luciano, Scott Pfeiffer
+
+OP PLAYERS (a rating over 99): 3
+  - Bruce Davies (LE, row 157) (Maxx Crosby - LE 104 (Raiders '26)): OVR 104
+  - John Rechner (RE, row 210) (Aaron Donald - RE 103 (Rams '26)): OVR 103
+  - Jimmy Sodano (RT, row 226) (Lane Johnson - RT 102 (Eagles '26)): OVR 102
+
+BUILT: told.ros  (154 players, checksums valid, 2143552 bytes)
+  skin tone set on 151 players (73 given a face of that skin tone); 10 empty depth-chart spots filled
+  custom players: 2
+    - Dusty Rhodes (QB): B, edited clone of Josh Allen - QB 95 (Bills '26), OVR 89
+    - Michael Valentine (HB): C, from scratch, OVR 82
+
+2000s  (in the game: Madison City New Bloodline, replacing Broncos A)
+  your players: 14   kept from Broncos A for open spots: 17   deleted (reserve copies): 36
+  kept: WR Vance Johnson 79; WR Ed McCaffrey 80; WR Anthony Miller 85; LT Gary Zimmerman 95; LG Mark Schlereth 89; C Tom Nalen 80; RG Brian Habib 88; RT Broderick Thompson 81; LE Dan Williams 77; DT James Jones 81; DT Michael D. Perry 92; LOLB Elijah Alexander 71; MLB David Wyman 81; ROLB Allen Aldridge 76; CB Ray Crockett 85; K Jason Elam 90; P Tom Rouen 92
+  note: 17 required spot(s) were empty, so the best Broncos A players at those positions stay on the team.
+
+1988-1990  (in the game: Huddle Club Hunters, replacing Redskins A)
+  your players: 46   kept from Redskins A for open spots: 6   deleted (reserve copies): 47
+  kept: DT Tim Johnson 80; LOLB Ken Harvey 87; ROLB Marvcus Patton 79; CB Darrell Green 87; K Eddie Murray 90; P Matt Turk 89
+  note: 6 required spot(s) were empty, so the best Redskins A players at those positions stay on the team.
+
+Rowan  (in the game: Rowan Profs, replacing 49ers A)
+  your players: 44   kept from 49ers A for open spots: 4   deleted (reserve copies): 49
+  kept: FB William Floyd 92; C Bart Oates 86; RG Jesse Sapolu 90; ROLB Lee Woodall 80
+  note: 4 required spot(s) were empty, so the best 49ers A players at those positions stay on the team.
+
+Rivals  (in the game: Bad Guys Rivals, replacing Raiders A)
+  your players: 9   kept from Raiders A for open spots: 19   deleted (reserve copies): 34
+  kept: FB Derrick Fenner 82; WR Tim Brown 94; WR Rocket Ismail 82; WR James Jett 76; LG Steve Wisniewski 95; C Dan Turk 87; RG Kevin Gogan 92; RE Pat Swilling 83; DT Jerry Ball 93; DT Chester McGlockton 88; LOLB Aaron Wallace 74; MLB Greg Biekert 73; ROLB Mike Jones 77; CB Albert Lewis 84; CB Terry McDaniel 90; FS James Trapp 72; SS Eddie Anderson 86; K Jeff Jaeger 81; P Jeff Gossett 90
+  note: 19 required spot(s) were empty, so the best Raiders A players at those positions stay on the team.
+
+Monica's Best  (in the game: Monica's Best Champions, replacing Raiders B)
+  your players: 23   kept from Raiders B for open spots: 15   deleted (reserve copies): 38
+  kept: WR Tim Brown 94; TE Andrew Glover 81; LT Gerald Perry 78; RG Kevin Gogan 92; RT Greg Skrepenak 79; LE Aundray Bruce 78; RE Pat Swilling 83; DT Jerry Ball 93; DT Chester McGlockton 88; LOLB Aaron Wallace 74; ROLB Mike Jones 77; CB Terry McDaniel 90; CB Albert Lewis 84; K Jeff Jaeger 81; P Jeff Gossett 90
+  note: 15 required spot(s) were empty, so the best Raiders B players at those positions stay on the team.
+
+Dodge Field All Time  (in the game: Dodge Field Dodge Legends, replacing Chiefs A)
+  your players: 18   kept from Chiefs A for open spots: 13   deleted (reserve copies): 40
+  kept: FB Kimble Anders 86; TE Derrick Walker 79; LT Jeff Criswell 82; LG Dave Szott 83; C Tim Grunhard 85; RG Will Shields 88; RT Ricky Siglar 78; LOLB George Jamison 78; MLB Tracy Simien 76; CB James Hasty 89; CB Dale Carter 89; SS Brian Washington 82; K Lin Elliot 80
+  note: 13 required spot(s) were empty, so the best Chiefs A players at those positions stay on the team.
+
+Next: copy told.ros into Documents\Madden NFL 08\Rosters, then Main Menu > Menu > Files > Load.

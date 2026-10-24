@@ -1563,5 +1563,308 @@
 "INJ": "Injury",
 "TGH": "Toughness"
 },
-"note": "model: EA Madden overall formula per position, fitted on EA 2003-2007 rosters (every EA player within 1 point). avg: average 2007 NFL player per position. template: 2007 player closest to that average, used as the base body for from-scratch players."
+"note": "model: EA Madden overall formula per position, fitted on EA 2003-2007 rosters (every EA player within 1 point). avg: average 2007 NFL player per position. template: 2007 player closest to that average, used as the base body for from-scratch players.",
+"main": {
+"QB": [
+"THA",
+"THP",
+"AWR",
+"SPD",
+"BTK",
+"AGI"
+],
+"HB": [
+"SPD",
+"BTK",
+"AGI",
+"CAR",
+"AWR",
+"ACC",
+"CTH",
+"STR",
+"PBK"
+],
+"FB": [
+"RBK",
+"CTH",
+"AWR",
+"STR",
+"SPD",
+"ACC",
+"BTK",
+"CAR",
+"PBK",
+"AGI"
+],
+"WR": [
+"CTH",
+"AGI",
+"ACC",
+"AWR",
+"SPD",
+"JMP",
+"STR",
+"BTK"
+],
+"TE": [
+"CTH",
+"RBK",
+"SPD",
+"AWR",
+"STR",
+"BTK",
+"PBK",
+"ACC",
+"AGI"
+],
+"LT": [
+"PBK",
+"RBK",
+"AWR",
+"STR",
+"ACC",
+"AGI",
+"SPD"
+],
+"LG": [
+"RBK",
+"PBK",
+"STR",
+"AWR",
+"SPD",
+"ACC",
+"AGI"
+],
+"C": [
+"RBK",
+"STR",
+"PBK",
+"AWR",
+"ACC",
+"SPD",
+"AGI"
+],
+"RG": [
+"RBK",
+"AWR",
+"STR",
+"PBK",
+"ACC",
+"SPD",
+"AGI"
+],
+"RT": [
+"PBK",
+"RBK",
+"STR",
+"AWR",
+"AGI",
+"ACC",
+"SPD"
+],
+"LE": [
+"TAK",
+"ACC",
+"SPD",
+"STR",
+"AWR",
+"AGI"
+],
+"RE": [
+"TAK",
+"ACC",
+"SPD",
+"STR",
+"AWR",
+"AGI"
+],
+"DT": [
+"STR",
+"TAK",
+"AWR",
+"ACC",
+"SPD",
+"AGI"
+],
+"LOLB": [
+"TAK",
+"AWR",
+"SPD",
+"STR",
+"AGI",
+"ACC",
+"CTH"
+],
+"MLB": [
+"AWR",
+"TAK",
+"STR",
+"AGI",
+"ACC",
+"SPD"
+],
+"ROLB": [
+"TAK",
+"AWR",
+"SPD",
+"STR",
+"AGI",
+"ACC",
+"CTH"
+],
+"CB": [
+"SPD",
+"AWR",
+"CTH",
+"ACC",
+"TAK",
+"AGI",
+"JMP",
+"STR"
+],
+"FS": [
+"AWR",
+"CTH",
+"SPD",
+"ACC",
+"TAK",
+"AGI",
+"JMP",
+"STR"
+],
+"SS": [
+"AWR",
+"TAK",
+"CTH",
+"SPD",
+"ACC",
+"AGI",
+"STR",
+"JMP"
+],
+"K": [
+"KAC",
+"KPW",
+"AWR"
+],
+"P": [
+"KPW",
+"KAC",
+"AWR"
+]
+},
+"groups": {
+"QBs": [
+"QB"
+],
+"Running backs": [
+"HB",
+"FB"
+],
+"Receivers": [
+"WR",
+"TE"
+],
+"Offensive line": [
+"LT",
+"LG",
+"C",
+"RG",
+"RT"
+],
+"Defensive line": [
+"LE",
+"RE",
+"DT"
+],
+"Linebackers": [
+"LOLB",
+"MLB",
+"ROLB"
+],
+"Defensive backs": [
+"CB",
+"FS",
+"SS"
+],
+"Kickers": [
+"K",
+"P"
+]
+},
+"groupCols": {
+"QBs": [
+"SPD",
+"AGI",
+"AWR",
+"BTK",
+"THP",
+"THA"
+],
+"Running backs": [
+"SPD",
+"ACC",
+"AGI",
+"STR",
+"AWR",
+"CTH",
+"CAR",
+"BTK",
+"PBK",
+"RBK"
+],
+"Receivers": [
+"SPD",
+"ACC",
+"AGI",
+"STR",
+"AWR",
+"CTH",
+"BTK",
+"JMP",
+"PBK",
+"RBK"
+],
+"Offensive line": [
+"SPD",
+"ACC",
+"AGI",
+"STR",
+"AWR",
+"PBK",
+"RBK"
+],
+"Defensive line": [
+"SPD",
+"ACC",
+"AGI",
+"STR",
+"AWR",
+"TAK"
+],
+"Linebackers": [
+"SPD",
+"ACC",
+"AGI",
+"STR",
+"AWR",
+"CTH",
+"TAK"
+],
+"Defensive backs": [
+"SPD",
+"ACC",
+"AGI",
+"STR",
+"AWR",
+"CTH",
+"JMP",
+"TAK"
+],
+"Kickers": [
+"AWR",
+"KPW",
+"KAC"
+]
+}
 }

@@ -124,6 +124,7 @@ def read_workbook(path):
             notes.append('%d player(s) are on squad "%s", which is not a squad on Build Your Squads '
                          '(misspelled, renamed, or past the Number of squads); left out. Players rows: %s'
                          % (len(lines), nm, ', '.join(map(str, lines[:12])) + (' ...' if len(lines) > 12 else '')))
+    settings['allow'] = read_allow(sq)
     custom = read_custom(wb, notes)
     for p in players:
         c = custom.get((p['first'].lower(), p['last'].lower(), p['pos']))
@@ -132,18 +133,31 @@ def read_workbook(path):
     return settings, need, squads, players, notes
 
 
+def read_allow(sq):
+    """Build Your Squads switches: a tick box just left of "Allow B ..." / "Allow C ...". Missing = allowed."""
+    allow = {'B': True, 'C': True}
+    for (r, c), v in sq.items():
+        m = re.match(r'allow\s+([bc])\b', clean(v).lower()) if isinstance(v, str) else None
+        if m and c > 0:
+            box = sq.get((r, c - 1), True)
+            allow[m.group(1).upper()] = box is True or str(box).strip().upper() == 'TRUE'
+    return allow
+
+
 CUSTOM_TAB = 'Custom Players'
 CUSTOM_FIELDS = {'height': 'HGT', 'weight': 'WGT', 'age': 'AGE'}
 
 
 def read_custom(wb, notes):
     """Custom Players tab (optional): one row per player whose ratings were set by hand.
-    Type A = start from his clone and change some ratings; type B = from scratch (no clone).
-    Blank cells keep the default (the clone's number for A, the average player at that position for B)."""
+    Type B = edited clone (his clone with some numbers changed); type C = from scratch (no clone).
+    Blank cells keep the default (the clone's number for B, the average player at that position for C)."""
     if CUSTOM_TAB not in wb.sheets:
         return {}
     cp = wb.sheet(CUSTOM_TAB)
-    head = {c: clean(v) for (r, c), v in cp.items() if r == 0}
+    # the header row is the one with First and Last (row 2 when the Show dropdown sits above it)
+    hrow = next((r for r in sorted({r for r, _ in cp}) if any(clean(cp.get((r, c), '')).lower() == 'first' for c in range(6))), 0)
+    head = {c: clean(v) for (r, c), v in cp.items() if r == hrow}
     col = {}
     for c, h in head.items():
         low = h.lower()
@@ -164,11 +178,13 @@ def read_custom(wb, notes):
                     col[c] = key
     out = {}
     nrows = max((r for r, _ in cp), default=0) + 1
-    for r in range(1, nrows):
+    for r in range(hrow + 1, nrows):
         row = {key: cp.get((r, c), '') for c, key in col.items()}
         first, last, pos = clean(row.get('first')), clean(row.get('last')), clean(row.get('pos'))
-        kind = clean(row.get('type')).upper()[:1]
-        if not (first or last) or kind not in ('A', 'B'):
+        ty = clean(row.get('type')).lower()
+        # B = edited clone, C = from scratch (older saves: "A: Start from clone" = edited, "B: From scratch")
+        kind = 'C' if 'scratch' in ty else 'B' if ('edit' in ty or 'clone' in ty) else ''
+        if not (first or last) or not kind:
             continue
         vals = {}
         for key, v in row.items():
@@ -226,12 +242,12 @@ def custom_ovr(pos, e, capped=True):
 def custom_entry(e, cu, pos, cap):
     """The clone (A) or the average-player template (B) with the saved numbers on top."""
     out = dict(e)
-    if cu['type'] == 'B':
+    if cu['type'] == 'C':
         out.update(CP['avg'][pos])               # every number starts at the position's average
     for k, v in cu['vals'].items():
         if k in RAW:
             out[k] = max(0, min(cap if k in CP['keys'] else 400, int(v)))
-    if cu['type'] == 'B':
+    if cu['type'] == 'C':
         out['ovr'] = custom_ovr(pos, out)
     elif any(k in CP['keys'] for k in cu['vals']):
         # A: keep the clone's own overall and move it by however much the changes move EA's formula,
@@ -254,7 +270,7 @@ def apply_custom(d, P2, PF2, idx, created, mine):
         for f, v in vals.items():
             ty, bo, _, bc = PF2[f]; rec = setbits(rec, bo, bc, min(int(v), (1 << bc) - 1))
         d[P2.dataoff + i * P2.reclen:P2.dataoff + (i + 1) * P2.reclen] = rec
-        said.append('%s (%s): %s, OVR %d' % (name, pos, 'from scratch' if e['custom'] == 'B' else 'custom ratings on %s' % p['clone'], e['ovr']))
+        said.append('%s (%s): %s, OVR %d' % (name, pos, 'C, from scratch' if e['custom'] == 'C' else 'B, edited clone of %s' % p['clone'], e['ovr']))
     return said
 
 
@@ -386,7 +402,8 @@ def main():
             teams.setdefault(r['TLNA'].strip(), r)          # reserves can be picked by city alone: "Broncos A"
     greats = {e['label']: e for e in json.load(open(os.path.join(KIT, 'data', 'greats_v3.json')))}
 
-    errors, warns, skipped, op_hits = [], [], [], []
+    errors, warns, skipped, op_hits, left_out = [], [], [], [], []
+    allow = settings['allow']
     warns.extend(notes)
     live = [s for s in squads if s['name']]
     if not live:
@@ -394,7 +411,9 @@ def main():
     # Empty squads (placeholders, or squads whose players have no ready clone yet) are skipped, not errors.
     on_squad, ready_on = collections.Counter(), collections.Counter()
     for p in players:
-        ok = p['check'].upper().startswith('OK') and (bool(p['clone']) or p.get('custom', {}).get('type') == 'B')
+        cu = p.get('custom')
+        ok = (p['check'].upper().startswith('OK') and (bool(p['clone']) or bool(cu and cu['type'] == 'C'))
+              and not (cu and not allow[cu['type']]))
         for k in set(p['ticks']):
             on_squad[k] += 1
             ready_on[k] += ok
@@ -434,7 +453,10 @@ def main():
             if k not in named:
                 warns.append('%s is ticked for squad slot %d, which has no name; ignored.' % (who, k)); continue
             cu = p.get('custom')
-            scratch = bool(cu and cu['type'] == 'B')
+            if cu and not allow[cu['type']]:
+                left_out.append('%s on %s: %s players are switched off on Build Your Squads' % (
+                    who, squads[k - 1]['name'], 'B (edited clone)' if cu['type'] == 'B' else 'C (from scratch)')); continue
+            scratch = bool(cu and cu['type'] == 'C')
             if not p['check'].upper().startswith('OK') or not (p['clone'] or scratch):
                 skipped.append('%s on %s: no valid clone yet' % (who, squads[k - 1]['name'])); continue
             if scratch and p['pos'] not in CP['template']:
@@ -492,7 +514,8 @@ def main():
                 s['name'], s['replaces'] or '(no team picked)', len(pl['mine']), sum(pl['gaps'].values()), s['replaces'] or '?'))
     blocking = [e for e in errors if a.allow_dupes is False or not e.startswith('SAME NAME')]
     for head, items in (('SQUADS SKIPPED (nothing to build yet)', skipped_squads),
-                        ('SKIPPED (pick a clone to include them)', skipped), ('WARNINGS', warns),
+                        ('SKIPPED (pick a clone to include them)', skipped),
+                        ('LEFT OUT (switched off on Build Your Squads)', left_out), ('WARNINGS', warns),
                         ('OP PLAYERS (a rating over %d)' % settings['op'], op_hits), ('ERRORS (fix before building)', errors)):
         if items:
             say(); say('%s: %d' % (head, len(items)))
