@@ -1,11 +1,13 @@
 # Changelog
 
-## v1.0, October 24, 2026: custom players and Community Pool
-- **Custom players.** Madden Tools › Create or edit a custom player opens a panel: **A** start from his clone and change only what's different (quick), or **B** from scratch with no clone (more involved). Height, weight and skin tone first, then ratings most important first for his position. Save any time; anything left alone stays at the default (his clone's number, or the average NFL player at his position).
-- Overall ratings use EA's own formula per position, worked out from EA's 2003-2007 rosters (matches every EA player to within 1 point). Type A moves the clone's overall by the change; type B is worked out from all his numbers.
-- New **Custom Players** tab stores what was saved; the Clone check reads "OK: … (custom ratings)" or "OK: … (custom, from scratch)".
-- **Community Pool.** Submit a player (emails Malcolm a code), Add a pool submission (Master only), and Add a player from the Community Pool (one click into your own copy).
-- Roster Kit builds custom players (tested: A and B both written into the roster; workbooks without custom players still build byte-identical rosters).
+## v1.0, October 24, 2026: player types, custom players and Community Pool
+- **Player types** (Players column P, automatic): **A – Exact clone**, **B – Edited clone** (a clone with some numbers changed), **C – From scratch** (no clone).
+- **Custom players.** Madden Tools › Create or edit a custom player opens a panel: B (quick) or C (more involved). Height, weight and skin tone first, then "Matter most for his position", then the other ratings folded away. Save any time; anything left alone stays at the default (his clone's number for B, the average NFL player at his position for C).
+- Overall ratings use EA's own formula per position, worked out from EA's 2003-2007 rosters (matches every EA player to within 1 point). B moves the clone's overall by the change; C is worked out from all his numbers.
+- **Custom Players** tab holds the numbers for B and C players, with a **Show** dropdown that shows only the ratings that matter for a group (QBs, linemen, kickers ...).
+- **Switches.** Players: Show B and Show C (hide or show those rows). Build Your Squads: Allow B and Allow C (off = not counted, not on Rosters cards, not built).
+- **Community Pool.** Submit a player (emails Malcolm a code), Add a pool submission (Master only), Add a player from the Community Pool.
+- Roster Kit builds B and C players and lists anyone left out by a switch (tested; workbooks without custom players still build byte-identical rosters).
 
 ## October 23, 2026 (night): Roster Kit
 - New one-file Windows program, MaddenRosterKit.exe (built on GitHub; no Python needed).
