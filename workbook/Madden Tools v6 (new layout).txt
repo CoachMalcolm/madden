@@ -16,6 +16,8 @@
  * PLAYER TYPES (Players column B, automatic): A = exact clone, B = edited clone, C = from scratch.
  * TOGGLES: Players A1 / C1 show or hide B and C players. Build Your Squads C1 / E1 allow or leave out
  *          B and C players (off = not counted, not on Rosters cards, not built).
+ * RATING LIMITS: Settings B5 = the most any rating can be (1-127); B6 = the OP line (99). Typing above B5 is refused;
+ *   a number already above B5 is kept, flagged "at limit" and plays at B5. Playing above 99 = flagged OP everywhere.
  *   - Submit a player to the Community Pool   Emails the selected player (custom or clone) to Malcolm to review.
  *   - Add a player from the Community Pool    Lists the Master's pool; "Add" puts that player in this workbook.
  *   - Add a pool submission (Master only)     Malcolm pastes a submission code to approve it into the pool.
@@ -74,7 +76,8 @@ function onOpen() {
 // Every automatic job, each on its own so one failure (e.g. a viewer without edit rights) can't stop the rest.
 function autoTidy(quiet) {
   var jobs = [function () { applySquadCount(true); }, function () { keepSpareRows(); },
-              function () { applyColors(true); }, function () { rebuildCloneDropdowns(true); }];
+              function () { applyColors(true); }, function () { rebuildCloneDropdowns(true); },
+              function () { refreshCustomSheet(); }];
   jobs.forEach(function (job) { try { job(); } catch (err) {} });
 }
 
@@ -92,6 +95,7 @@ var MENU_HELP = [
   ['Clean up squads (remove old squad names)', 'Finds squad names still on players that are no longer on Build Your Squads, and asks before removing them.'],
   ['Refresh everything (run all fixes now)', 'Runs every automatic job at once: squad rows, spare rows, colors, clone lists. Use it if something looks off.'],
   ['Automatic, no menu', 'Players always keeps 10 empty rows below the last player (Settings: Spare rows shown). Player type (column B) fills itself in: A = exact clone, B = edited clone, C = from scratch.'],
+  ['Rating limits and OP', 'Standard Madden is 99. Settings B5 is your limit for any rating (1-127; 127 is the most the game file holds) and Settings B6 is the OP line (99). Typing a rating above B5 is refused. A player who already has a higher number (from a list with a higher limit, or because B5 was lowered) keeps it here, is flagged "at limit" (amber) and plays at B5. Anyone who plays above 99 on his overall or any rating is flagged OP (purple) on Players, Custom Players, Rosters, Matchup, the panel and the roster kit report. EA\'s own 100s (Devin Hester 2007 Speed; the Madden 99/2000 100 overalls) are exempt.'],
   ['Toggles (tick boxes)', 'Players A1 / C1: show or hide B (edited clones) and C (from scratch) players. Build Your Squads C1 / E1: allow or leave out B and C players; off means they are not allowed: not counted, shaded red on Build Your Squads (their position) and on Rosters, with a warning, and left out when the roster is built (the kit names them). Custom Players C1 (Show): pick a group to see only the ratings that matter for it.']
 ];
 
@@ -123,6 +127,7 @@ function onEdit(e) {
   var r = e.range, sh = r.getSheet();
   if (sh.getName() === SQUADS) return onSquadsEdit(e);
   if (sh.getName() === 'Settings' && r.getColumn() === 3 && r.getRow() >= BONES_FIRST) { try { applyColors(true); } catch (err) {} return; }
+  if (sh.getName() === 'Settings' && r.getColumn() === 2 && (r.getRow() === 5 || r.getRow() === 6)) { try { refreshCustomSheet(); } catch (err) {} return; }
   if (sh.getName() === CUSTOM_TAB && r.getA1Notation() === 'C1') { try { applyCustomView(); } catch (err) {} return; }
   if (sh.getName() !== SHEET) return;
   try { keepSpareRows(sh); } catch (err) {}
@@ -863,7 +868,7 @@ function typeLetter(s) { s = String(s).toLowerCase(); return s.indexOf('scratch'
 var CP = {"keys":["SPD","ACC","AGI","STR","AWR","CTH","CAR","BTK","JMP","THP","THA","PBK","RBK","TAK","KPW","KAC","KR","STA","INJ","TGH"],"model":{"QB":[0.2137,0.0,0.0696,0.0,0.4207,0.0,0.0,0.0709,0.0,0.4973,0.5662,0.0,-0.0041,0.0053,0.0,0.0,0.0,0.0,0.0,0.0,-64.0606],"HB":[0.3355,0.1407,0.3327,0.0691,0.198,0.1347,0.2009,0.3338,0.0,0.0,0.0,0.0642,0.0,0.0,0.0,0.0,0.0,-0.0067,0.0,0.0,-63.5033],"FB":[0.1837,0.1817,0.0781,0.1859,0.2713,0.5372,0.1791,0.1809,0.0,-0.0065,0.0,0.0965,0.7105,0.0,-0.0058,0.0101,0.0,0.0044,0.0,0.0057,-92.1565],"WR":[0.2326,0.2347,0.2368,0.0792,0.2327,0.4663,0.0,0.0766,0.1516,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,-59.835],"TE":[0.2674,0.1303,0.1142,0.2615,0.2623,0.5258,0.0,0.1374,0.0,0.0,0.0,0.1318,0.5168,0.0,0.0,0.0,0.0,0.0,0.0,0.0,-82.267],"LT":[0.0765,0.0803,0.0797,0.3126,0.315,0.0,0.0,0.0,0.0,-0.0067,0.0,0.4776,0.4006,0.0,0.0,0.0048,-0.0095,0.0,0.0,-0.0046,-60.7573],"LG":[0.1602,0.1588,0.083,0.3315,0.3224,0.0,0.0,0.0,0.0,0.0,0.0,0.3324,0.4844,0.0,0.0,0.0,0.0,0.0,0.0,0.0,-65.6415],"C":[0.1537,0.1644,0.0857,0.3371,0.3215,-0.0046,0.0,0.0,0.0,-0.0054,0.0,0.3231,0.4909,0.0,0.0,0.0,-0.0071,0.0,0.0,0.0,-66.1515],"RG":[0.1543,0.1622,0.0812,0.329,0.3292,0.0048,0.0,0.0,0.0,0.0,0.0,0.3247,0.4795,0.0,0.0,0.0,0.0138,0.0,0.0,0.0,-65.2165],"RT":[0.074,0.0785,0.0873,0.3175,0.3148,0.0,0.0,0.0,0.0,0.0,0.0,0.473,0.3982,0.0,0.0,0.0,0.0052,0.0,0.0,0.0,-61.2862],"LE":[0.3672,0.3689,0.1811,0.3648,0.1837,0.0,0.0,0.0,0.0051,0.0059,0.0,0.0,0.0,0.5547,0.0,0.0,-0.0114,0.0,0.0,-0.0043,-70.4249],"RE":[0.3627,0.3726,0.1796,0.3613,0.1823,0.0,0.0,0.0,0.0065,0.0,0.0,0.0,0.0,0.5562,0.0049,0.0,0.0,0.0,0.0,0.0,-70.4123],"DT":[0.1813,0.2779,0.0946,0.5529,0.3724,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.4598,0.0,0.0,-0.0043,0.0,0.0,-0.0042,-67.4563],"LOLB":[0.3516,0.1228,0.2381,0.2382,0.3662,0.1206,0.0,0.0,0.007,-0.007,0.0,0.0,0.0,0.4915,0.0,0.0,0.0125,-0.0047,0.0,0.0068,-67.3942],"MLB":[0.0826,0.1665,0.1841,0.3372,0.5156,0.0,0.0,0.0,-0.0074,0.0,0.0,0.0043,0.0,0.5102,0.0,0.0,0.0,0.0,0.0,0.0,-62.6837],"ROLB":[0.3615,0.1339,0.2334,0.242,0.3618,0.1199,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.4861,0.0,0.0,-0.0089,0.0,0.0,0.0,-67.8973],"CB":[0.4019,0.2164,0.1574,0.0758,0.3854,0.3095,0.0,0.0,0.1518,0.0,0.0,0.0,0.0,0.1583,0.0,0.0,0.0,0.0,0.0,0.0,-65.4353],"FS":[0.3136,0.2458,0.1647,0.08,0.4719,0.3201,0.0,0.0,0.1512,0.0,0.0,-0.0046,0.0,0.2377,-0.0045,-0.0082,0.0,0.0,0.0,0.0,-68.9809],"SS":[0.308,0.1741,0.1635,0.1633,0.4833,0.3213,0.0,0.0,0.0867,0.0,0.0,0.0,0.0,0.3219,0.0,0.0,0.0,0.0,0.0,0.0,-70.7522],"K":[0.0,0.0114,-0.0118,0.0,0.2176,-0.0059,0.0,0.0044,0.0101,0.0073,-0.0118,0.0057,0.0,-0.0045,1.2831,1.493,-0.0063,0.0062,0.0,0.0,-180.0086],"P":[-0.0061,0.0,-0.0053,0.0,0.2165,0.0,0.0,-0.0069,0.0066,0.0,0.0,0.0,0.0,0.0,1.5044,1.3182,-0.0161,0.0056,0.0,0.0,-182.5233]},"avg":{"QB":{"SPD":63,"ACC":65,"AGI":64,"STR":58,"AWR":71,"CTH":29,"CAR":51,"BTK":53,"JMP":56,"THP":88,"THA":84,"PBK":20,"RBK":22,"TAK":23,"KPW":21,"KAC":22,"KR":2,"STA":89,"INJ":82,"TGH":77,"HGT":75,"WGT":223,"AGE":28,"OVR":79},"HB":{"SPD":89,"ACC":90,"AGI":88,"STR":69,"AWR":69,"CTH":68,"CAR":79,"BTK":80,"JMP":73,"THP":27,"THA":25,"PBK":39,"RBK":36,"TAK":28,"KPW":21,"KAC":20,"KR":48,"STA":86,"INJ":80,"TGH":79,"HGT":71,"WGT":217,"AGE":26,"OVR":80},"FB":{"SPD":74,"ACC":76,"AGI":70,"STR":73,"AWR":65,"CTH":66,"CAR":70,"BTK":72,"JMP":63,"THP":25,"THA":24,"PBK":50,"RBK":60,"TAK":34,"KPW":22,"KAC":21,"KR":15,"STA":79,"INJ":78,"TGH":79,"HGT":72,"WGT":247,"AGE":27,"OVR":81},"WR":{"SPD":91,"ACC":91,"AGI":89,"STR":56,"AWR":69,"CTH":81,"CAR":59,"BTK":53,"JMP":87,"THP":28,"THA":27,"PBK":26,"RBK":33,"TAK":25,"KPW":19,"KAC":19,"KR":60,"STA":88,"INJ":83,"TGH":77,"HGT":73,"WGT":200,"AGE":26,"OVR":79},"TE":{"SPD":75,"ACC":77,"AGI":73,"STR":70,"AWR":68,"CTH":76,"CAR":66,"BTK":61,"JMP":75,"THP":23,"THA":24,"PBK":52,"RBK":57,"TAK":33,"KPW":20,"KAC":20,"KR":12,"STA":82,"INJ":81,"TGH":76,"HGT":76,"WGT":255,"AGE":27,"OVR":77},"LT":{"SPD":54,"ACC":70,"AGI":54,"STR":89,"AWR":72,"CTH":24,"CAR":24,"BTK":13,"JMP":35,"THP":22,"THA":21,"PBK":86,"RBK":87,"TAK":25,"KPW":19,"KAC":20,"KR":1,"STA":70,"INJ":83,"TGH":84,"HGT":78,"WGT":317,"AGE":27,"OVR":79},"LG":{"SPD":53,"ACC":67,"AGI":53,"STR":89,"AWR":71,"CTH":23,"CAR":22,"BTK":14,"JMP":31,"THP":21,"THA":21,"PBK":84,"RBK":87,"TAK":26,"KPW":20,"KAC":20,"KR":1,"STA":67,"INJ":80,"TGH":82,"HGT":76,"WGT":314,"AGE":27,"OVR":80},"C":{"SPD":54,"ACC":68,"AGI":54,"STR":86,"AWR":71,"CTH":24,"CAR":23,"BTK":12,"JMP":29,"THP":23,"THA":22,"PBK":84,"RBK":85,"TAK":23,"KPW":20,"KAC":21,"KR":1,"STA":67,"INJ":77,"TGH":81,"HGT":75,"WGT":302,"AGE":27,"OVR":78},"RG":{"SPD":52,"ACC":66,"AGI":52,"STR":89,"AWR":71,"CTH":23,"CAR":24,"BTK":12,"JMP":30,"THP":21,"THA":22,"PBK":83,"RBK":87,"TAK":26,"KPW":19,"KAC":20,"KR":1,"STA":68,"INJ":81,"TGH":83,"HGT":76,"WGT":314,"AGE":27,"OVR":79},"RT":{"SPD":53,"ACC":68,"AGI":52,"STR":89,"AWR":72,"CTH":23,"CAR":23,"BTK":12,"JMP":34,"THP":21,"THA":21,"PBK":85,"RBK":87,"TAK":23,"KPW":20,"KAC":19,"KR":1,"STA":68,"INJ":80,"TGH":80,"HGT":78,"WGT":317,"AGE":27,"OVR":78},"LE":{"SPD":71,"ACC":78,"AGI":69,"STR":79,"AWR":67,"CTH":29,"CAR":25,"BTK":14,"JMP":61,"THP":21,"THA":21,"PBK":23,"RBK":26,"TAK":76,"KPW":19,"KAC":18,"KR":1,"STA":75,"INJ":81,"TGH":81,"HGT":76,"WGT":278,"AGE":27,"OVR":80},"RE":{"SPD":74,"ACC":80,"AGI":71,"STR":76,"AWR":68,"CTH":31,"CAR":24,"BTK":16,"JMP":60,"THP":20,"THA":21,"PBK":23,"RBK":24,"TAK":76,"KPW":20,"KAC":18,"KR":1,"STA":75,"INJ":81,"TGH":79,"HGT":76,"WGT":272,"AGE":27,"OVR":82},"DT":{"SPD":61,"ACC":72,"AGI":59,"STR":87,"AWR":67,"CTH":24,"CAR":21,"BTK":14,"JMP":51,"THP":21,"THA":20,"PBK":25,"RBK":30,"TAK":81,"KPW":19,"KAC":18,"KR":1,"STA":68,"INJ":80,"TGH":80,"HGT":75,"WGT":306,"AGE":27,"OVR":79},"LOLB":{"SPD":79,"ACC":82,"AGI":77,"STR":72,"AWR":71,"CTH":51,"CAR":31,"BTK":25,"JMP":66,"THP":22,"THA":22,"PBK":22,"RBK":42,"TAK":81,"KPW":20,"KAC":20,"KR":2,"STA":80,"INJ":82,"TGH":78,"HGT":74,"WGT":242,"AGE":27,"OVR":78},"MLB":{"SPD":79,"ACC":82,"AGI":78,"STR":74,"AWR":76,"CTH":54,"CAR":33,"BTK":21,"JMP":66,"THP":23,"THA":23,"PBK":23,"RBK":43,"TAK":86,"KPW":20,"KAC":21,"KR":2,"STA":83,"INJ":81,"TGH":81,"HGT":73,"WGT":241,"AGE":26,"OVR":79},"ROLB":{"SPD":80,"ACC":83,"AGI":80,"STR":72,"AWR":68,"CTH":53,"CAR":34,"BTK":24,"JMP":69,"THP":23,"THA":24,"PBK":23,"RBK":41,"TAK":81,"KPW":20,"KAC":20,"KR":2,"STA":84,"INJ":83,"TGH":81,"HGT":74,"WGT":239,"AGE":26,"OVR":79},"CB":{"SPD":91,"ACC":91,"AGI":90,"STR":54,"AWR":68,"CTH":66,"CAR":46,"BTK":22,"JMP":88,"THP":21,"THA":22,"PBK":19,"RBK":30,"TAK":59,"KPW":20,"KAC":19,"KR":53,"STA":88,"INJ":85,"TGH":75,"HGT":71,"WGT":191,"AGE":26,"OVR":78},"FS":{"SPD":88,"ACC":88,"AGI":86,"STR":60,"AWR":65,"CTH":64,"CAR":46,"BTK":29,"JMP":85,"THP":23,"THA":24,"PBK":20,"RBK":26,"TAK":69,"KPW":19,"KAC":19,"KR":36,"STA":88,"INJ":85,"TGH":79,"HGT":72,"WGT":204,"AGE":26,"OVR":79},"SS":{"SPD":86,"ACC":87,"AGI":84,"STR":63,"AWR":69,"CTH":62,"CAR":45,"BTK":29,"JMP":83,"THP":23,"THA":22,"PBK":21,"RBK":35,"TAK":74,"KPW":22,"KAC":21,"KR":32,"STA":86,"INJ":84,"TGH":79,"HGT":72,"WGT":209,"AGE":27,"OVR":79},"K":{"SPD":56,"ACC":57,"AGI":52,"STR":34,"AWR":76,"CTH":25,"CAR":22,"BTK":12,"JMP":33,"THP":25,"THA":18,"PBK":18,"RBK":19,"TAK":19,"KPW":90,"KAC":89,"KR":0,"STA":84,"INJ":83,"TGH":46,"HGT":72,"WGT":202,"AGE":30,"OVR":86},"P":{"SPD":60,"ACC":61,"AGI":53,"STR":41,"AWR":70,"CTH":28,"CAR":28,"BTK":13,"JMP":36,"THP":45,"THA":42,"PBK":19,"RBK":20,"TAK":23,"KPW":90,"KAC":87,"KR":0,"STA":84,"INJ":82,"TGH":51,"HGT":74,"WGT":213,"AGE":29,"OVR":83}},"order":{"QB":["THA","THP","AWR","SPD","BTK","AGI","TAK","ACC","STR","CTH","CAR","JMP","PBK","RBK","KPW","KAC","KR","STA","INJ","TGH"],"HB":["SPD","BTK","AGI","CAR","AWR","ACC","CTH","STR","PBK","JMP","THP","THA","RBK","TAK","KPW","KAC","KR","STA","INJ","TGH"],"FB":["RBK","CTH","AWR","STR","SPD","ACC","BTK","CAR","PBK","AGI","KAC","TGH","STA","JMP","THP","THA","TAK","KPW","KR","INJ"],"WR":["CTH","AGI","ACC","AWR","SPD","JMP","STR","BTK","CAR","THP","THA","PBK","RBK","TAK","KPW","KAC","KR","STA","INJ","TGH"],"TE":["CTH","RBK","SPD","AWR","STR","BTK","PBK","ACC","AGI","CAR","JMP","THP","THA","TAK","KPW","KAC","KR","STA","INJ","TGH"],"LT":["PBK","RBK","AWR","STR","ACC","AGI","SPD","KAC","CTH","CAR","BTK","JMP","THP","THA","TAK","KPW","KR","STA","INJ","TGH"],"LG":["RBK","PBK","STR","AWR","SPD","ACC","AGI","CTH","CAR","BTK","JMP","THP","THA","TAK","KPW","KAC","KR","STA","INJ","TGH"],"C":["RBK","STR","PBK","AWR","ACC","SPD","AGI","CTH","CAR","BTK","JMP","THP","THA","TAK","KPW","KAC","KR","STA","INJ","TGH"],"RG":["RBK","AWR","STR","PBK","ACC","SPD","AGI","KR","CTH","CAR","BTK","JMP","THP","THA","TAK","KPW","KAC","STA","INJ","TGH"],"RT":["PBK","RBK","STR","AWR","AGI","ACC","SPD","KR","CTH","CAR","BTK","JMP","THP","THA","TAK","KPW","KAC","STA","INJ","TGH"],"LE":["TAK","ACC","SPD","STR","AWR","AGI","THP","JMP","CTH","CAR","BTK","THA","PBK","RBK","KPW","KAC","KR","STA","INJ","TGH"],"RE":["TAK","ACC","SPD","STR","AWR","AGI","JMP","KPW","CTH","CAR","BTK","THP","THA","PBK","RBK","KAC","KR","STA","INJ","TGH"],"DT":["STR","TAK","AWR","ACC","SPD","AGI","CTH","CAR","BTK","JMP","THP","THA","PBK","RBK","KPW","KAC","KR","STA","INJ","TGH"],"LOLB":["TAK","AWR","SPD","STR","AGI","ACC","CTH","KR","JMP","TGH","CAR","BTK","THP","THA","PBK","RBK","KPW","KAC","STA","INJ"],"MLB":["AWR","TAK","STR","AGI","ACC","SPD","PBK","CTH","CAR","BTK","JMP","THP","THA","RBK","KPW","KAC","KR","STA","INJ","TGH"],"ROLB":["TAK","AWR","SPD","STR","AGI","ACC","CTH","CAR","BTK","JMP","THP","THA","PBK","RBK","KPW","KAC","KR","STA","INJ","TGH"],"CB":["SPD","AWR","CTH","ACC","TAK","AGI","JMP","STR","CAR","BTK","THP","THA","PBK","RBK","KPW","KAC","KR","STA","INJ","TGH"],"FS":["AWR","CTH","SPD","ACC","TAK","AGI","JMP","STR","CAR","BTK","THP","THA","PBK","RBK","KPW","KAC","KR","STA","INJ","TGH"],"SS":["AWR","TAK","CTH","SPD","ACC","AGI","STR","JMP","CAR","BTK","THP","THA","PBK","RBK","KPW","KAC","KR","STA","INJ","TGH"],"K":["KAC","KPW","AWR","ACC","JMP","THP","STA","PBK","BTK","SPD","AGI","STR","CTH","CAR","THA","RBK","TAK","KR","INJ","TGH"],"P":["KPW","KAC","AWR","JMP","STA","SPD","ACC","AGI","STR","CTH","CAR","BTK","THP","THA","PBK","RBK","TAK","KR","INJ","TGH"]},"names":{"SPD":"Speed","ACC":"Acceleration","AGI":"Agility","STR":"Strength","AWR":"Awareness","CTH":"Catching","CAR":"Carrying","BTK":"Break tackle","JMP":"Jumping","THP":"Throw power","THA":"Throw accuracy","PBK":"Pass block","RBK":"Run block","TAK":"Tackle","KPW":"Kick power","KAC":"Kick accuracy","KR":"Kick return","STA":"Stamina","INJ":"Injury","TGH":"Toughness"},"main":{"QB":["THA","THP","AWR","SPD","BTK","AGI"],"HB":["SPD","BTK","AGI","CAR","AWR","ACC","CTH","STR","PBK"],"FB":["RBK","CTH","AWR","STR","SPD","ACC","BTK","CAR","PBK","AGI"],"WR":["CTH","AGI","ACC","AWR","SPD","JMP","STR","BTK"],"TE":["CTH","RBK","SPD","AWR","STR","BTK","PBK","ACC","AGI"],"LT":["PBK","RBK","AWR","STR","ACC","AGI","SPD"],"LG":["RBK","PBK","STR","AWR","SPD","ACC","AGI"],"C":["RBK","STR","PBK","AWR","ACC","SPD","AGI"],"RG":["RBK","AWR","STR","PBK","ACC","SPD","AGI"],"RT":["PBK","RBK","STR","AWR","AGI","ACC","SPD"],"LE":["TAK","ACC","SPD","STR","AWR","AGI"],"RE":["TAK","ACC","SPD","STR","AWR","AGI"],"DT":["STR","TAK","AWR","ACC","SPD","AGI"],"LOLB":["TAK","AWR","SPD","STR","AGI","ACC","CTH"],"MLB":["AWR","TAK","STR","AGI","ACC","SPD"],"ROLB":["TAK","AWR","SPD","STR","AGI","ACC","CTH"],"CB":["SPD","AWR","CTH","ACC","TAK","AGI","JMP","STR"],"FS":["AWR","CTH","SPD","ACC","TAK","AGI","JMP","STR"],"SS":["AWR","TAK","CTH","SPD","ACC","AGI","STR","JMP"],"K":["KAC","KPW","AWR"],"P":["KPW","KAC","AWR"]},"groups":{"QBs":["QB"],"Running backs":["HB","FB"],"Receivers":["WR","TE"],"Offensive line":["LT","LG","C","RG","RT"],"Defensive line":["LE","RE","DT"],"Linebackers":["LOLB","MLB","ROLB"],"Defensive backs":["CB","FS","SS"],"Kickers":["K","P"]},"groupCols":{"QBs":["SPD","AGI","AWR","BTK","THP","THA"],"Running backs":["SPD","ACC","AGI","STR","AWR","CTH","CAR","BTK","PBK","RBK"],"Receivers":["SPD","ACC","AGI","STR","AWR","CTH","BTK","JMP","PBK","RBK"],"Offensive line":["SPD","ACC","AGI","STR","AWR","PBK","RBK"],"Defensive line":["SPD","ACC","AGI","STR","AWR","TAK"],"Linebackers":["SPD","ACC","AGI","STR","AWR","CTH","TAK"],"Defensive backs":["SPD","ACC","AGI","STR","AWR","CTH","JMP","TAK"],"Kickers":["AWR","KPW","KAC"]}};
 var CUSTOM_HEAD = ['Key', 'First', 'Last', 'Position', 'Type', 'Height (inches)', 'Weight (lbs)', 'Age']
   .concat(CP.keys.map(function (k) { return CP.names[k] + ' (' + k + ')'; }))
-  .concat(['Overall (estimate)', 'Saved']);
+  .concat(['Overall (estimate)', 'Saved', 'Top rating (OP check)']);
 
 function customSheet(create) {
   var ss = SpreadsheetApp.getActive(), sh = ss.getSheetByName(CUSTOM_TAB);
@@ -884,28 +889,59 @@ function showCustomPanel() {
   SpreadsheetApp.getUi().showSidebar(html);
 }
 
-// Limits for custom numbers. Ratings: 0 to the Settings ratings cap (B5, 127 = the most the roster file holds).
-// Height/weight/age: what the roster file can hold, kept to sensible football sizes.
-var BODY_LIMITS = { HGT: [60, 90, 'Height (inches)'], WGT: [160, 400, 'Weight (lbs)'], AGE: [18, 50, 'Age'] };
+// Limits. Ratings: 0 up to Settings B5 ("Max rating", 1-127; 127 is the most the roster file holds).
+// Standard Madden is 99: anything that plays above Settings B6 (99) is flagged OP.
+// Typing a rating above B5 is refused. A number already above B5 (brought in from a list with a higher B5,
+// or kept after B5 was lowered) stays in the workbook, is flagged "at limit", and plays at B5.
+// Height/weight/age: weight over 415 plays at 415 and age over 63 plays at 63 (the most the roster file holds).
+var BODY_LIMITS = { HGT: [60, 90, 'Height (inches)'], WGT: [160, 500, 'Weight (lbs)'], AGE: [18, 99, 'Age'] };
+var FILE_MAX = { WGT: 415, AGE: 63 };
+// EA's own over-99 numbers: kept as they are, never limited by B5 and never flagged OP (name|NFL season).
+var EA_EXEMPT = ['devin hester|2007', 'barry sanders|1997', 'jerry rice|1997', 'deion sanders|1997', 'deion sanders|1998',
+                 'shannon sharpe|1997', 'mark chmura|1997', 'tony boselli|1997', 'mike alstott|1998'];
 function customLimits() {
-  var cap = 127;
-  try { cap = Number(SpreadsheetApp.getActive().getSheetByName('Settings').getRange('B5').getValue()) || 127; } catch (e) {}
-  cap = Math.max(1, Math.min(127, Math.floor(cap)));
-  var lim = { cap: cap };
+  var st = null, cap = 127, op = 99;
+  try { st = SpreadsheetApp.getActive().getSheetByName('Settings'); } catch (e) {}
+  if (st) {
+    cap = Number(st.getRange('B5').getValue()) || 127;
+    op = Number(st.getRange('B6').getValue()) || 99;
+  }
+  var lim = { cap: Math.max(1, Math.min(127, Math.floor(cap))), op: op, fileMax: FILE_MAX };
   for (var k in BODY_LIMITS) lim[k] = BODY_LIMITS[k];
   return lim;
 }
-// Returns a list of problems ('' = fine) for the numbers a user set.
-function customProblems(vals) {
+// Problems with the numbers a user set ([] = fine). A number he already had (saved before) is never refused.
+function customProblems(vals, saved) {
   var lim = customLimits(), bad = [];
   for (var k in vals) {
     var v = vals[k], n = Number(v), lo = 0, hi = lim.cap, name = CP.names[k] || k;
     if (BODY_LIMITS[k]) { lo = BODY_LIMITS[k][0]; hi = BODY_LIMITS[k][1]; name = BODY_LIMITS[k][2]; }
     else if (CP.keys.indexOf(k) < 0) { bad.push(k + ' is not a rating'); continue; }
-    if (String(v).trim() === '' || isNaN(n) || n !== Math.floor(n)) bad.push(name + ' must be a whole number (' + lo + '-' + hi + ')');
-    else if (n < lo || n > hi) bad.push(name + ' ' + n + ' is out of range: ' + lo + '-' + hi + (BODY_LIMITS[k] ? '' : ' (ratings cap on Settings)'));
+    if (String(v).trim() === '' || isNaN(n) || n !== Math.floor(n)) { bad.push(name + ' must be a whole number (' + lo + '-' + hi + ')'); continue; }
+    if (saved && Number(saved[k]) === n) continue;
+    if (n < lo || n > hi) bad.push(name + ' ' + n + ' is out of range: ' + lo + '-' + hi + (BODY_LIMITS[k] ? '' : ' (your limit on Settings B5)'));
   }
   return bad;
+}
+// His numbers as typed and as they play. top = his highest number (overall included), used for the flags.
+function customNumbers(type, pos, cloneVals, vals, exempt) {
+  var lim = customLimits(), base = type === 'B' ? cloneVals : CP.avg[pos], typed = {}, plays = {}, top = 0;
+  for (var k in base) typed[k] = base[k];
+  for (var k2 in vals) typed[k2] = Number(vals[k2]);
+  CP.keys.forEach(function (k) {
+    var v = Number(typed[k]) || 0, keep = exempt && type === 'B' && !vals.hasOwnProperty(k);
+    plays[k] = keep ? v : Math.min(v, lim.cap);
+    top = Math.max(top, keep ? Math.min(v, 99) : v);
+  });
+  var ovrTyped, ovrPlays;
+  if (type === 'B') {
+    ovrTyped = Math.round(base.OVR + customOvr(pos, typed, false) - customOvr(pos, base, false));
+    ovrPlays = Math.round(base.OVR + customOvr(pos, plays, false) - customOvr(pos, base, false));
+  } else {
+    ovrTyped = Math.round(customOvr(pos, typed, false)); ovrPlays = Math.round(customOvr(pos, plays, false));
+  }
+  ovrTyped = Math.max(0, ovrTyped); ovrPlays = Math.max(0, Math.min(lim.cap, ovrPlays));
+  return { top: Math.max(top, ovrTyped), ovrTyped: ovrTyped, ovrPlays: ovrPlays };
 }
 
 function customOvr(pos, v, capped) {
@@ -923,12 +959,13 @@ function getCustomContext() {
   var v = sh.getRange(row, PC.first, 1, 13).getValues()[0];   // C..O
   var first = String(v[0]).trim(), last = String(v[1]).trim(), pos = String(v[4]).trim(), clone = String(v[7]).trim(), skin = String(v[12]).trim();
   if (!first && !last) return { ok: false, msg: 'This row has no player. Type his name first.' };
-  var cloneVals = null;
+  var cloneVals = null, exempt = false;
   if (clone) {
     var g = ss.getSheetByName(GREATS), f = g.getRange('C:C').createTextFinder(clone).matchEntireCell(true).findNext();
     if (f) {
-      var r = g.getRange(f.getRow(), 5, 1, 29).getValues()[0];   // E (OVR) .. AG (AGE)
+      var r = g.getRange(f.getRow(), 5, 1, 29).getValues()[0];   // E (OVR) .. AG (AGE); G = name, J = season
       cloneVals = { OVR: Number(r[0]), HGT: Number(r[26]), WGT: Number(r[27]), AGE: Number(r[28]) };
+      exempt = EA_EXEMPT.indexOf(String(r[2]).trim().toLowerCase() + '|' + String(r[5]).slice(0, 4)) >= 0;
       for (var i = 0; i < CP.keys.length; i++) cloneVals[CP.keys[i]] = Number(r[6 + i]);
     }
   }
@@ -946,7 +983,7 @@ function getCustomContext() {
     }
   }
   return { ok: true, row: row, first: first, last: last, pos: pos, clone: clone, skin: skin,
-           cloneVals: cloneVals, saved: saved, cp: CP, lim: customLimits() };
+           cloneVals: cloneVals, exempt: exempt, saved: saved, cp: CP, lim: customLimits() };
 }
 
 /** Save from the panel. vals holds only the numbers that differ from the default. */
@@ -959,27 +996,70 @@ function saveCustom(form) {
   if (!pos && form.pos) { pl.getRange(ctx.row, POS_COL).setValue(form.pos); pos = form.pos;
     pl.getRange(ctx.row, CLONE_COL).setDataValidation(ruleFor(pos, ctx.row, SpreadsheetApp.getActive().getSheetByName(LISTS))); }
   if (!pos) return { ok: false, msg: 'Pick his position first.' };
-  var bad = customProblems(form.vals || {});
+  var bad = customProblems(form.vals || {}, ctx.saved ? ctx.saved.vals : null);
   if (bad.length) return { ok: false, msg: 'Not saved. Fix: ' + bad.join('; ') + '.' };
   if (form.type === 'B' && !ctx.cloneVals) return { ok: false, msg: 'B (edited clone) needs a clone in column J. Pick one, or choose C (from scratch).' };
   if (form.skin) pl.getRange(ctx.row, PC.skin).setValue(form.skin);
-  var base = form.type === 'B' ? ctx.cloneVals : CP.avg[pos];
-  var all = {}; for (var k in base) all[k] = base[k];
-  for (var k2 in form.vals) all[k2] = Number(form.vals[k2]);
-  var ovr = form.type === 'B'
-    ? Math.max(0, Math.min(99, Math.round(base.OVR + customOvr(pos, all, false) - customOvr(pos, base, false))))
-    : customOvr(pos, all);
+  var nums = customNumbers(form.type, pos, ctx.cloneVals, form.vals, ctx.exempt), ovr = nums.ovrPlays;
   var cs = customSheet(true), key = ctx.first + '|' + ctx.last + '|' + pos;
   var line = [key, ctx.first, ctx.last, pos, form.type === 'B' ? 'B: Edited clone' : 'C: From scratch'];
   ['HGT', 'WGT', 'AGE'].concat(CP.keys).forEach(function (k) { line.push(form.vals.hasOwnProperty(k) ? Number(form.vals[k]) : ''); });
-  line.push(ovr, new Date());
+  line.push(ovr, new Date(), nums.top);
   var keys = cs.getLastRow() >= CUSTOM_FIRST ? cs.getRange(CUSTOM_FIRST, 1, cs.getLastRow() - CUSTOM_FIRST + 1, 1).getValues().map(function (r) { return String(r[0]); }) : [];
   var at = keys.indexOf(key);
   if (at >= 0) cs.getRange(at + CUSTOM_FIRST, 1, 1, line.length).setValues([line]);
   else cs.appendRow(line);
   SpreadsheetApp.flush();
+  try { refreshCustomSheet(); } catch (err) {}
   try { keepSpareRows(pl); } catch (err) {}
-  return { ok: true, ovr: ovr, msg: 'Saved ' + ctx.first + ' ' + ctx.last + ' (' + pos + ', ' + (form.type === 'B' ? 'B, edited clone' : 'C, from scratch') + '). Overall about ' + ovr + '.' };
+  var L = customLimits(), fl = [];
+  if (Math.min(nums.top, L.cap) > L.op) fl.push('OP');
+  if (nums.top > L.cap) fl.push('at limit: plays at ' + L.cap);
+  return { ok: true, ovr: ovr, msg: 'Saved ' + ctx.first + ' ' + ctx.last + ' (' + pos + ', ' + (form.type === 'B' ? 'B, edited clone' : 'C, from scratch') + '). Overall about ' + ovr + (fl.length ? ' · ' + fl.join(' · ') : '') + '.' };
+}
+
+// Keeps Custom Players in step with Settings B5/B6: overall as he plays (AC), top rating (AE, used by the
+// Players flags), and a note on every number that is over the limit. Runs on open, after saving, and when B5/B6 change.
+function refreshCustomSheet() {
+  var ss = SpreadsheetApp.getActive(), cs = customSheet(false);
+  if (!cs || cs.getLastRow() < CUSTOM_FIRST) return;
+  if (cs.getMaxColumns() < CUSTOM_HEAD.length) cs.insertColumnsAfter(cs.getMaxColumns(), CUSTOM_HEAD.length - cs.getMaxColumns());
+  var L = customLimits(), n = cs.getLastRow() - CUSTOM_FIRST + 1;
+  var data = cs.getRange(CUSTOM_FIRST, 1, n, CUSTOM_HEAD.length).getValues();
+  var pl = ss.getSheetByName(SHEET), g = ss.getSheetByName(GREATS);
+  var pv = pl.getRange(FIRST_ROW, PC.first, LAST_ROW - FIRST_ROW + 1, PC.clone - PC.first + 1).getValues(), cloneOf = {};
+  pv.forEach(function (r) { cloneOf[r[0] + '|' + r[1] + '|' + r[PC.pos - PC.first]] = String(r[PC.clone - PC.first]).trim(); });
+  var map = ['HGT', 'WGT', 'AGE'].concat(CP.keys), ovrCol = [], topCol = [], notes = [];
+  data.forEach(function (row) {
+    var key = String(row[0]), pos = String(row[3]).trim(), type = typeLetter(row[4]), vals = {}, rowNotes = [];
+    for (var c = 0; c < map.length; c++) if (row[5 + c] !== '' && row[5 + c] !== null) vals[map[c]] = Number(row[5 + c]);
+    var cloneVals = null, exempt = false, clone = cloneOf[key];
+    if (type === 'B' && clone) {
+      var f = g.getRange('C:C').createTextFinder(clone).matchEntireCell(true).findNext();
+      if (f) {
+        var r = g.getRange(f.getRow(), 5, 1, 29).getValues()[0];
+        cloneVals = { OVR: Number(r[0]), HGT: Number(r[26]), WGT: Number(r[27]), AGE: Number(r[28]) };
+        for (var i = 0; i < CP.keys.length; i++) cloneVals[CP.keys[i]] = Number(r[6 + i]);
+        exempt = EA_EXEMPT.indexOf(String(r[2]).trim().toLowerCase() + '|' + String(r[5]).slice(0, 4)) >= 0;
+      }
+    }
+    if (!pos || !CP.model[pos] || !type || (type === 'B' && !cloneVals)) { ovrCol.push([row[CUSTOM_HEAD.length - 3]]); topCol.push(['']); }
+    else { var nums = customNumbers(type, pos, cloneVals, vals, exempt); ovrCol.push([nums.ovrPlays]); topCol.push([nums.top]); }
+    for (var c2 = 0; c2 < map.length; c2++) {
+      var k = map[c2], v = vals[k], note = '';
+      if (v !== undefined && !isNaN(v)) {
+        if (FILE_MAX[k] && v > FILE_MAX[k]) note = 'Typed ' + v + '; plays at ' + FILE_MAX[k] + ' (the most the roster file holds).';
+        else if (CP.keys.indexOf(k) >= 0 && v > 127) note = 'Typed ' + v + ': not possible. Ratings top out at 127 (the most the roster file holds). Fix this number; the roster kit stops until you do.';
+        else if (CP.keys.indexOf(k) >= 0 && v > L.cap) note = 'Typed ' + v + '; plays at ' + L.cap + ' (your limit, Settings B5).' + (L.cap > L.op ? ' OP (over ' + L.op + ').' : '');
+        else if (CP.keys.indexOf(k) >= 0 && v > L.op) note = 'OP: over ' + L.op + ' (standard Madden is 99).';
+      }
+      rowNotes.push(note);
+    }
+    notes.push(rowNotes);
+  });
+  cs.getRange(CUSTOM_FIRST, CUSTOM_HEAD.length - 2, n, 1).setValues(ovrCol);   // AC Overall
+  cs.getRange(CUSTOM_FIRST, CUSTOM_HEAD.length, n, 1).setValues(topCol);       // AE Top rating
+  cs.getRange(CUSTOM_FIRST, 6, n, map.length).setNotes(notes);                 // F..AB
 }
 
 function removeCustom(row) {
@@ -1005,10 +1085,14 @@ var CUSTOM_HTML = String.raw`<!doctype html>
   .opt.on{border-color:#1f6f3a;background:#eef7f0}
   .opt b{font-size:15px}.opt small{display:block;color:#555;margin-top:2px}
   .sec{font-weight:bold;margin:12px 0 4px;color:#1f3864;border-bottom:1px solid #ddd}
-  .f{display:flex;align-items:center;gap:6px;margin:3px 0}
+  .f{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:3px 0}
   .f label{flex:1}.f input,.f select{width:72px;padding:4px;font-size:14px}
   .f.chg label{font-weight:bold;color:#1f6f3a}
   .f.bad label{font-weight:bold;color:#b00020}.f.bad input{border:2px solid #b00020;background:#fde7e9}
+  .f.over input{border:2px solid #b45f06;background:#ffd966;font-weight:bold}
+  .f.op input{border:2px solid #5b2a86;background:#d9d2e9;font-weight:bold}
+  .fl{flex-basis:100%;font-size:12px;margin:0 0 4px;color:#7a3e00}.fl.op{color:#4a148c}
+  #ovr small{display:block;font-weight:normal;color:#555;font-size:11px}
   .def{color:#999;font-size:11px;width:42px;text-align:right}
   .bar{position:sticky;top:0;background:#fff;padding:6px 0;border-bottom:1px solid #ddd;z-index:2;display:flex;gap:6px;align-items:center}
   button{padding:6px 12px;font-size:14px;cursor:pointer}
@@ -1026,15 +1110,33 @@ function el(id){return document.getElementById(id)}
 function say(t,ok){el('msg').className=ok?'ok':'err';el('msg').textContent=t}
 function base(){return TYPE==='B'&&X.cloneVals?X.cloneVals:X.cp.avg[pos()]}
 function pos(){return X.pos||(el('pos')?el('pos').value:'')}
-function ovr(){var p=pos();if(!p||!X.cp.model[p])return'';var b=base(),all={};for(var k in b)all[k]=b[k];for(var k in VALS)all[k]=+VALS[k];
-  function f(v,cap){var w=X.cp.model[p],s=w[w.length-1];X.cp.keys.forEach(function(k,i){s+=(+v[k]||0)*w[i]});return cap?Math.max(0,Math.min(99,Math.round(s))):s}
-  return TYPE==='B'?Math.max(0,Math.min(99,Math.round(b.OVR+f(all,false)-f(b,false)))):f(all,true)}
-function upd(){var o=ovr();el('ovr').textContent=o===''?'':'Overall about '+o}
-function lim(k){var L=X.lim||{cap:127};return L[k]?[L[k][0],L[k][1]]:[0,L.cap]}
-function badMsg(k,v){var r=lim(k),n=+v;if(String(v).trim()===''||isNaN(n)||n!==Math.floor(n)||n<r[0]||n>r[1])return (X.cp.names[k]||{WGT:'Weight',AGE:'Age',HGT:'Height'}[k]||k)+': '+r[0]+'-'+r[1]+(X.lim&&!X.lim[k]?' (ratings cap on Settings)':'');return ''}
+function L(){return X.lim||{cap:127,op:99,fileMax:{WGT:415,AGE:63}}}
+function keepK(k){return X.exempt&&TYPE==='B'&&!VALS.hasOwnProperty(k)}
+function ovr(){var p=pos();if(!p||!X.cp.model[p])return null;var b=base(),all={},pl={},cap=L().cap;for(var k in b)all[k]=b[k];for(var k in VALS)all[k]=+VALS[k];
+  X.cp.keys.forEach(function(k){pl[k]=keepK(k)?+all[k]:Math.min(+all[k]||0,cap)});
+  function f(v){var w=X.cp.model[p],s=w[w.length-1];X.cp.keys.forEach(function(k,i){s+=(+v[k]||0)*w[i]});return s}
+  var t=TYPE==='B'?b.OVR+f(all)-f(b):f(all),q=TYPE==='B'?b.OVR+f(pl)-f(b):f(pl);
+  var hi=0;X.cp.keys.forEach(function(k){if(!keepK(k))hi=Math.max(hi,pl[k])});
+  return {typed:Math.max(0,Math.round(t)),plays:Math.max(0,Math.min(cap,Math.round(q))),hi:hi}}
+function upd(){var o=ovr();if(!o){el('ovr').textContent='';return}
+  el('ovr').innerHTML='Overall about '+o.plays+(o.plays>L().op||o.hi>L().op?' &middot; OP':'')+(o.typed!==o.plays?'<small>(his typed numbers would give about '+o.typed+')</small>':'')}
+function flagText(k,v){var l=L(),n=+v;if(String(v).trim()===''||isNaN(n))return['',''];
+  if(l.fileMax[k]&&n>l.fileMax[k])return['over','&#9888; Plays at '+l.fileMax[k]+' (the most the roster file holds)'];
+  if(X.cp.keys.indexOf(k)<0||keepK(k))return['',''];
+  if(n>l.cap)return['over','&#9888; Over your limit (B5 = '+l.cap+'): plays at '+l.cap+(l.cap>l.op?' &middot; OP (over '+l.op+')':'')];
+  if(n>l.op)return['op','OP (over '+l.op+')'];return['','']}
+function lim(k){var l=L();return l[k]?[l[k][0],l[k][1]]:[0,l.cap]}
+function badMsg(k,v){var r=lim(k),n=+v,nm=(X.cp.names[k]||{WGT:'Weight',AGE:'Age',HGT:'Height'}[k]||k);
+  if(String(v).trim()===''||isNaN(n)||n!==Math.floor(n))return nm+': a whole number, '+r[0]+'-'+r[1];
+  if(X.saved&&X.saved.vals&&+X.saved.vals[k]===n)return '';
+  if(n<r[0]||n>r[1])return nm+': '+r[0]+'-'+r[1]+(L()[k]?'':' (your limit on Settings B5)');return ''}
 function problems(){var out=[];for(var k in VALS){var m=badMsg(k,VALS[k]);if(m)out.push(m)}return out}
 function field(k,label,min,max){var r=lim(k);min=r[0];max=r[1];var b=base(),d=b?b[k]:'',v=VALS.hasOwnProperty(k)?VALS[k]:d;
-  return '<div class="f'+(VALS.hasOwnProperty(k)?' chg':'')+'" id="r_'+k+'"><label for="v_'+k+'">'+label+'</label><input id="v_'+k+'" type="number" min="'+min+'" max="'+max+'" value="'+v+'" data-k="'+k+'"><span class="def">'+(d===''||d===undefined?'':'was '+d)+'</span></div>'}
+  var ft=flagText(k,v);
+  return '<div class="f'+(VALS.hasOwnProperty(k)?' chg':'')+(ft[0]?' '+ft[0]:'')+'" id="r_'+k+'"><label for="v_'+k+'">'+label+'</label><input id="v_'+k+'" type="number" min="'+min+'" value="'+v+'" data-k="'+k+'"><span class="def">'+(d===''||d===undefined?'':'was '+d)+'</span><div class="fl'+(ft[0]==='op'?' op':'')+'" id="fl_'+k+'">'+ft[1]+'</div></div>'}
+function paint(k,val){var bad=val!==''&&badMsg(k,val),ft=bad?['','']:flagText(k,val===''?base()[k]:val);
+  el('r_'+k).className='f'+(bad?' bad':(VALS.hasOwnProperty(k)?' chg':'')+(ft[0]?' '+ft[0]:''));
+  var fl=el('fl_'+k);fl.className='fl'+(ft[0]==='op'?' op':'');fl.innerHTML=ft[1];return bad}
 function draw(){
   var c=X, p=pos(), h='<div class="who"><h3>'+c.first+' '+c.last+'</h3>'+(c.pos?c.pos:'No position yet')+(c.clone?' &middot; clone: '+c.clone:' &middot; no clone')+'</div>';
   h+='<div class="opt'+(TYPE==='B'?' on':'')+'" id="oB"><b>B &ndash; Edited clone</b><small>Easy and fast. Start from '+(c.clone?'his clone':'a clone (pick one in column J first)')+' and change only what is different.</small></div>';
@@ -1060,11 +1162,11 @@ function draw(){
 function bind(){
   el('oB').onclick=function(){if(TYPE!=='B'){TYPE='B';VALS={};draw()}};el('oC').onclick=function(){if(TYPE!=='C'){TYPE='C';VALS={};draw()}};
   if(el('pos'))el('pos').onchange=function(){VALS={};draw()};
-  Array.prototype.forEach.call(document.querySelectorAll('input[data-k]'),function(i){i.oninput=function(){var k=i.dataset.k,d=base()[k];if(i.value===''||+i.value===d)delete VALS[k];else VALS[k]=+i.value;var bad=i.value!==''&&badMsg(k,i.value);el('r_'+k).className='f'+(bad?' bad':VALS.hasOwnProperty(k)?' chg':'');if(bad)say(bad,false);else if(!problems().length)say('',true);upd()}});
+  Array.prototype.forEach.call(document.querySelectorAll('input[data-k]'),function(i){i.oninput=function(){var k=i.dataset.k,d=base()[k];if(i.value===''||+i.value===d)delete VALS[k];else VALS[k]=+i.value;var bad=paint(k,i.value);if(bad)say(bad,false);else if(!problems().length)say('',true);upd()}});
   if(el('hft')){var hh=function(){var v=+el('hft').value*12+ +el('hin').value;if(v===base().HGT)delete VALS.HGT;else VALS.HGT=v;upd()};el('hft').onchange=hh;el('hin').onchange=hh}
   if(el('rm'))el('rm').onclick=function(){say('Removing...',true);google.script.run.withSuccessHandler(function(r){say(r.msg,r.ok);load()}).removeCustom(X.row)}}
 function load(){say('',true);el('app').textContent='Loading...';google.script.run.withSuccessHandler(function(c){if(!c.ok){el('app').textContent='';say(c.msg,false);return}X=c;
-  TYPE=c.saved?c.saved.type:(c.clone?'B':'C');VALS=c.saved?c.saved.vals:{};draw()}).withFailureHandler(function(e){say(e.message,false)}).getCustomContext()}
+  TYPE=c.saved?c.saved.type:(c.clone?'B':'C');VALS=c.saved?JSON.parse(JSON.stringify(c.saved.vals)):{};draw()}).withFailureHandler(function(e){say(e.message,false)}).getCustomContext()}
 el('reload').onclick=load;
 el('save').onclick=function(){if(!X)return;var pr=problems();if(pr.length){say('Not saved. Fix the red boxes: '+pr.join('; '),false);return}say('Saving...',true);
   google.script.run.withSuccessHandler(function(r){say(r.msg,r.ok);if(r.ok)load()}).withFailureHandler(function(e){say(e.message,false)})
@@ -1184,8 +1286,9 @@ function addFromPool(code) {
   if (e.type === 'B' || e.type === 'C') {
     var cs = customSheet(true), line = [e.first + '|' + e.last + '|' + e.pos, e.first, e.last, e.pos, e.type === 'B' ? 'B: Edited clone' : 'C: From scratch'];
     ['HGT', 'WGT', 'AGE'].concat(CP.keys).forEach(function (k) { line.push(e.vals && e.vals.hasOwnProperty(k) ? Number(e.vals[k]) : ''); });
-    line.push(e.ovr, new Date());
+    line.push(e.ovr, new Date(), '');
     cs.appendRow(line);
+    try { refreshCustomSheet(); } catch (err) {}
   }
   try { keepSpareRows(pl); } catch (err) {}
   return { ok: true, msg: e.first + ' ' + e.last + ' added on row ' + row + '. Pick his squads in column N and where he made his bones in I.' };

@@ -48,7 +48,7 @@ def num(v, default):
 def read_workbook(path):
     wb = Workbook(path)
     st, sq, pl = wb.sheet('Settings'), wb.sheet('Build Your Squads'), wb.sheet('Players')
-    settings = dict(cap=num(cell(st, 'B5'), 127), op=num(cell(st, 'B6'), 99), per_squad=num(cell(st, 'B7'), 55))
+    settings = dict(cap=max(1, min(127, int(num(cell(st, 'B5'), 127)))), op=num(cell(st, 'B6'), 99), per_squad=num(cell(st, 'B7'), 55))
     need = {}
     for r in range(5, 26):
         p = clean(cell(st, 'G%d' % r))
@@ -152,7 +152,20 @@ CUSTOM_FIELDS = {'height': 'HGT', 'weight': 'WGT', 'age': 'AGE'}
 
 CUSTOM_ERRORS = []
 CP_NAMES = json.load(open(os.path.join(KIT, 'data', 'custom_players.json')))['names']
-BODY_LIMITS = {'HGT': (60, 90, 'Height (inches)'), 'WGT': (160, 400, 'Weight (lbs)'), 'AGE': (18, 50, 'Age')}
+BODY_LIMITS = {'HGT': (60, 90, 'Height (inches)'), 'WGT': (160, 500, 'Weight (lbs)'), 'AGE': (18, 99, 'Age')}
+# What the roster file can hold: weight is stored as pounds over 160 in 8 bits (max 415), age in 6 bits (max 63).
+FILE_MAX = {'WGT': 415, 'AGE': 63}
+# EA's own ratings over 99: kept as they are, never capped at B5 and never flagged OP. (name, NFL season)
+EA_EXEMPT = {('devin hester', 2007), ('barry sanders', 1997), ('jerry rice', 1997), ('deion sanders', 1997),
+             ('deion sanders', 1998), ('shannon sharpe', 1997), ('mark chmura', 1997), ('tony boselli', 1997),
+             ('mike alstott', 1998)}
+
+
+def ea_exempt(e):
+    try:
+        return (str(e.get('name', '')).lower(), int(str(e.get('season', '')).strip()[:4])) in EA_EXEMPT
+    except ValueError:
+        return False
 
 
 def read_custom(wb, notes, cap=127):
@@ -201,11 +214,10 @@ def read_custom(wb, notes, cap=127):
             if n is None:
                 notes.append('Custom Players row %d (%s %s): "%s" is not a number for %s; using the default.' % (r + 1, first, last, v, key))
                 continue
-            lo, hi, label = BODY_LIMITS.get(key, (0, min(127, int(cap)), CP_NAMES.get(key, key)))
+            lo, hi, label = BODY_LIMITS.get(key, (0, 127, CP_NAMES.get(key, key)))
             if n != int(n) or not lo <= n <= hi:
-                CUSTOM_ERRORS.append('Custom Players row %d (%s %s): %s is %s; it must be a whole number from %d to %d%s.'
-                                     % (r + 1, first, last, label, clean(v), lo, hi,
-                                        '' if key in BODY_LIMITS else ' (ratings cap on Settings)'))
+                CUSTOM_ERRORS.append('Custom Players row %d (%s %s): %s is %s; it must be a whole number from %d to %d.'
+                                     % (r + 1, first, last, label, clean(v), lo, hi))
                 continue
             vals[key] = n
         out[(first.lower(), last.lower(), pos)] = dict(type=kind, vals=vals, line=r + 1)
@@ -246,10 +258,10 @@ RAW = {'SPD': 'PSPD', 'ACC': 'PACC', 'AGI': 'PAGI', 'STR': 'PSTR', 'AWR': 'PAWR'
 
 
 def custom_ovr(pos, e, capped=True):
-    """EA's overall formula for the position (fitted on EA's own rosters), capped 0-99."""
+    """EA's overall formula for the position (fitted on EA's own rosters). capped: whole number, 0 or more."""
     w = CP['model'][pos]
     v = sum(e[k] * w[i] for i, k in enumerate(CP['keys'])) + w[-1]
-    return max(0, min(99, int(round(v)))) if capped else v
+    return max(0, int(round(v))) if capped else v
 
 
 def custom_entry(e, cu, pos, cap):
@@ -259,41 +271,75 @@ def custom_entry(e, cu, pos, cap):
         out.update(CP['avg'][pos])               # every number starts at the position's average
     for k, v in cu['vals'].items():
         if k in RAW:
-            out[k] = max(0, min(cap if k in CP['keys'] else 400, int(v)))
-    if cu['type'] == 'C':
-        out['ovr'] = custom_ovr(pos, out)
-    elif any(k in CP['keys'] for k in cu['vals']):
-        # A: keep the clone's own overall and move it by however much the changes move EA's formula,
-        # so a clone from a community roster (rated a little differently) isn't re-rated from scratch.
-        out['ovr'] = max(0, min(99, int(round(e['ovr'] + custom_ovr(pos, out, False) - custom_ovr(pos, e, False)))))
+            out[k] = max(0, int(v))                # the typed number; limit_entry brings it down to B5
     out['custom'] = cu['type']
+    out['typed'] = set(k for k in cu['vals'] if k in RAW)
+    out['base'] = e
     return out
+
+
+def limit_entry(e, pos, cap):
+    """Bring every rating (and the overall) over Settings B5 down to B5 - except EA's own exempt numbers.
+    Weight and age over what the roster file holds come down to 415 lbs / 63. Returns (entry, [(key, typed, plays)])."""
+    out, hit = dict(e), []
+    exempt = ea_exempt(e.get('base', e))
+    for k in RATING_KEYS:
+        v = out.get(k, 0)
+        if v > cap and not (exempt and k not in out.get('typed', ())):
+            hit.append((k, v, cap)); out[k] = cap
+    for k, mx in FILE_MAX.items():
+        if out.get(k, 0) > mx and k in out.get('typed', ()):
+            hit.append((k, out[k], mx)); out[k] = mx
+    if out.get('custom') == 'C':
+        typed_ovr = custom_ovr(pos, dict(e))
+        ovr = custom_ovr(pos, out)
+    elif out.get('custom') == 'B' and any(k in CP['keys'] for k in out['typed']):
+        # B: keep the clone's own overall and move it by however much the changes move EA's formula,
+        # so a clone from a community roster (rated a little differently) isn't re-rated from scratch.
+        b = out['base']
+        typed_ovr = max(0, int(round(b['ovr'] + custom_ovr(pos, e, False) - custom_ovr(pos, b, False))))
+        ovr = max(0, int(round(b['ovr'] + custom_ovr(pos, out, False) - custom_ovr(pos, b, False))))
+    else:
+        typed_ovr = ovr = out['ovr']
+    if ovr > cap and not (exempt and not out.get('custom')):
+        hit.append(('OVR', typed_ovr, cap)); ovr = cap
+    elif typed_ovr > cap and not (exempt and not out.get('custom')):
+        hit.append(('OVR', typed_ovr, ovr))
+    out['ovr'] = ovr
+    if hit and not out.get('custom'):
+        out['capped'] = [k for k, _, _ in hit if k != 'OVR'] + ['ovr']
+    return out, hit
 
 
 def apply_custom(d, P2, PF2, idx, created, mine):
     """Write custom ratings, height, weight, age and the new overall into each custom player's record."""
     said = []
     for (pgid, tg, pos, ovr, name, kr), (p, e) in zip(created, mine):
-        if not e.get('custom'):
+        if not e.get('custom') and not e.get('capped'):
             continue
         i = idx[pgid]; rec = B.rec_of(bytes(d), P2, i)
-        vals = {RAW[k]: e[k] for k in RAW if k in e}
-        vals['PWGT'] = max(0, e['WGT'] - 160)      # stored as pounds over 160
+        if e.get('custom'):
+            vals = {RAW[k]: e[k] for k in RAW if k in e}
+            vals['PWGT'] = max(0, e['WGT'] - 160)      # stored as pounds over 160
+        else:                                          # an exact clone over the B5 limit: only the capped numbers
+            vals = {RAW[k]: e[k] for k in e['capped'] if k in RAW}
         vals['POVR'] = e['ovr']
         for f, v in vals.items():
             ty, bo, _, bc = PF2[f]; rec = setbits(rec, bo, bc, min(int(v), (1 << bc) - 1))
         d[P2.dataoff + i * P2.reclen:P2.dataoff + (i + 1) * P2.reclen] = rec
+        if not e.get('custom'):
+            continue
         said.append('%s (%s): %s, OVR %d' % (name, pos, 'C, from scratch' if e['custom'] == 'C' else 'B, edited clone of %s' % p['clone'], e['ovr']))
     return said
 
 
 def op_list(e, op):
     out = []
-    if e['ovr'] > op:
+    if e['ovr'] > op and not (ea_exempt(e) and not e.get('custom')):
         out.append('OVR %d' % e['ovr'])
     for k in RATING_KEYS:
         v = e.get(k, 0)
-        if v > op and not (e['name'] == 'Devin Hester' and k == 'SPD' and v == 100):
+        if v > op and not (ea_exempt(e.get('base', e)) and k not in e.get('typed', ())):
             out.append('%s %d' % (k, v))
     return out
 
@@ -415,7 +461,7 @@ def main():
             teams.setdefault(r['TLNA'].strip(), r)          # reserves can be picked by city alone: "Broncos A"
     greats = {e['label']: e for e in json.load(open(os.path.join(KIT, 'data', 'greats_v3.json')))}
 
-    errors, warns, skipped, op_hits, left_out = [], [], [], [], []
+    errors, warns, skipped, op_hits, left_out, at_limit = [], [], [], [], [], []
     allow = settings['allow']
     warns.extend(notes)
     errors.extend(CUSTOM_ERRORS)
@@ -488,6 +534,10 @@ def main():
                 p['jersey'] = p['jersey'].split('.')[0]
             if p['jersey'] and not p['jersey'].isdigit():
                 warns.append('%s: jersey "%s" is not a number; using the clone\'s' % (who, p['jersey'])); p['jersey'] = ''
+            e, lim = limit_entry(e, p['pos'], settings['cap'])
+            if lim:
+                at_limit.append('%s on %s: %s' % (who, squads[k - 1]['name'], ', '.join(
+                    '%s %d plays at %d' % (CP_NAMES.get(x, x), t, v) for x, t, v in lim)))
             roster[k].append((p, e))
             hits = op_list(e, settings['op'])
             if hits:
@@ -532,6 +582,7 @@ def main():
     for head, items in (('SQUADS SKIPPED (nothing to build yet)', skipped_squads),
                         ('SKIPPED (pick a clone to include them)', skipped),
                         ('LEFT OUT: NOT ALLOWED (Build Your Squads toggles)', left_out), ('WARNINGS', warns),
+                        ('PLAYS AT THE LIMIT (Settings B5 = %d; the workbook keeps his own number)' % settings['cap'], at_limit),
                         ('OP PLAYERS (a rating over %d)' % settings['op'], op_hits), ('ERRORS (fix before building)', errors)):
         if items:
             say(); say('%s: %d' % (head, len(items)))

@@ -24,6 +24,12 @@ Put the people you played with and against into **Madden NFL 08 (PC)**. Each per
 - The game plays at most **299 teams**; 300 or more makes it quit before the coin toss.
 - 223 teams come with the base roster; **76 reserve slots** (Broncos A, Raiders B, Admirals A …) hold your squads so every real NFL team stays in the game.
 - Up to **32 squads**, **55 players** a squad, 1,500 players in the pool.
+- **Ratings: standard Madden is 99.** Settings B5 is your limit for any rating (1–127; 127 is the most the game file holds), and Settings B6 is the OP line (99).
+  - Typing a rating above B5 is refused.
+  - A player who already has a higher number (brought in from a list with a higher limit, or because B5 was lowered) keeps it in the workbook, is flagged **at limit**, and plays at B5 in the roster.
+  - Anyone who plays above 99 on his overall or any rating is flagged **OP** everywhere he shows up, and in the roster kit's report.
+  - EA's own 100s are exempt: Devin Hester 2007 (Speed 100) and the Madden 99/2000 100 overalls (Barry Sanders, Jerry Rice, Deion Sanders, Shannon Sharpe, Mark Chmura, Tony Boselli, Mike Alstott).
+- Weight can be typed up to 500 lbs and age up to 99; the game file holds 415 lbs and 63, so anything higher plays at those.
 
 ## Files
 
