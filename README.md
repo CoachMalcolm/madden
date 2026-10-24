@@ -8,7 +8,7 @@ Put the people you played with and against into **Madden NFL 08 (PC)**. Each per
 
 | Piece | What it is | Where |
 |---|---|---|
-| Master Madden List v6 | Google Sheet: players, squads, rosters, matchups | [Make your own copy](https://docs.google.com/spreadsheets/d/1oWacpslQbD5xzF-0GAfb7CrIAhQ-AIoXba38ctx5G14/copy) |
+| Master Madden List v6 | Google Sheet: players, custom players, squads, rosters, matchups, Community Pool | [Make your own copy](https://docs.google.com/spreadsheets/d/1oWacpslQbD5xzF-0GAfb7CrIAhQ-AIoXba38ctx5G14/copy) |
 | Madden Tools | The workbook's menu (Apps Script). It comes with the copy. | Inside the workbook |
 | Madden Roster Kit | Program for your PC that turns the workbook into a `.ros` roster file | [Download the latest](https://github.com/CoachMalcolm/madden/releases/latest) (`MaddenRosterKit-windows.zip`), or the source in `kit/` |
 | User Guide | Step-by-step help, 8 steps | `index.html` → the link above |
@@ -29,7 +29,7 @@ Put the people you played with and against into **Madden NFL 08 (PC)**. Each per
 
 - `index.html`: the User Guide (GitHub Pages serves it).
 - `kit/`: the Roster Kit source (builder, base rosters, ratings data).
-- `workbook/Madden Tools v6 (automatic).txt`: the workbook's Madden Tools script (paste into Extensions > Apps Script).
+- `workbook/Madden Tools v6 (custom players).txt`: the workbook's Madden Tools script, newest version (paste into Extensions > Apps Script). Older versions are kept beside it.
 - `.github/workflows/build-windows.yml`: builds `MaddenRosterKit.exe` and the download zip on GitHub.
 - `CREDITS.md`: whose rosters and tools this is built on.
 - `CHANGELOG.md`: what changed and when.

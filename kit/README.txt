@@ -8,6 +8,13 @@ WHAT YOU NEED (one time)
   Windows: unzip MaddenRosterKit-windows.zip anywhere. Nothing to install.
   (Running from source instead: Python 3 from python.org, tick "Add python.exe to PATH".)
 
+CUSTOM PLAYERS
+  Players made with Madden Tools > Create or edit a custom player are saved on the workbook's
+  Custom Players tab. The kit reads it automatically (also from a Custom Players CSV):
+    A = his clone with your numbers on top; B = from scratch, built on an average player at his
+    position. Blank numbers keep the default. The overall uses EA's formula for the position.
+  The report lists every custom player under "custom players".
+
 BUILD A ROSTER (the easy way)
   1. Double-click MaddenRosterKit.exe (from source: "Madden Roster Kit.bat").
   2. Give it your list, any of these:
