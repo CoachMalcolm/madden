@@ -56,6 +56,7 @@ function onOpen() {
     .createMenu('Madden Tools')
     .addItem('Find a clone (search panel)...', 'showFinder')
     .addItem('Create or edit a custom player (panel)...', 'showCustomPanel')
+    .addItem('Migrate players to another list (panel)...', 'showMigratePanel')
     .addSeparator()
     .addItem('Submit a player to the Community Pool...', 'submitToPool')
     .addItem('Add a player from the Community Pool...', 'showPool')
@@ -85,6 +86,7 @@ function autoTidy(quiet) {
 var MENU_HELP = [
   ['Find a clone (search panel)', 'Opens a search panel on the right. Search NFL players by name, team, season, jersey, overall or two ratings, then click Use to put that clone on the row you selected.'],
   ['Create or edit a custom player (panel)', 'Click a player row, then open this. B (edited clone): start from his clone and change only what is different (quick). C (from scratch): no clone needed (more involved). Height, weight and skin tone come first, then the ratings that matter most at his position; the rest are folded under Other ratings. Save any time; anything you leave alone stays at the default (his clone\'s number for B, the average player at his position for C).'],
+  ['Migrate players to another list (panel)', 'Copy players between lists. Pick a source (your list, the Master Madden List, or another list by its link) and Load players: they fill the Migration tab. Tick the ones you want (sort with the filter arrows) and Add ticked: they go to Ready for Migration. Repeat with other sources. Then Migrate to a New workbook (a copy of the blank Starter with your players) or an Existing one (paste its link). Each player is re-read from his source first; exact duplicates (same name and position) and broken entries are skipped and listed. Squads are cleared (pick them in the new list) and Source notes where he came from.'],
   ['Submit a player to the Community Pool', 'Click a player row first. Sends that player (his clone or his custom ratings) to Malcolm by email so others can use him. Google asks once for permission to send email.'],
   ['Add a player from the Community Pool', 'Shows every player in the Master\'s Community Pool. Click Add and he joins your Players tab (and Custom Players, if he has custom ratings). Then put him on a squad in column N (Squads).'],
   ['Add a pool submission (Master only)', 'For Malcolm: paste the code from a submission email to add that player to the Master\'s Community Pool.'],
@@ -1178,7 +1180,8 @@ load();
 // Anyone: Submit (emails Malcolm a code) and Add from pool (reads the Master's Community Pool tab).
 // Malcolm: Add a pool submission (pastes the code into the Master's Community Pool tab).
 
-var MASTER_ID = '1oWacpslQbD5xzF-0GAfb7CrIAhQ-AIoXba38ctx5G14';
+var MASTER_ID = '1QM60wATNZpLcZ7qnPwyZnNrF453RjxbMuUBvKlPXsfI';    // Master Madden List
+var STARTER_ID = '1KF9t2CENZqvkc9za8tHhAGjFQ2uW3r9DGJ6e2QSUd6I';   // Master Madden List Starter (blank)
 var POOL_TAB = 'Community Pool';
 var POOL_EMAIL = 'coachmalcolmonline@gmail.com';
 var POOL_HEAD = ['Name', 'Position', 'Type', 'Overall (estimate)', 'Clone (type A)', 'Made by', 'Added', 'Pool code'];
@@ -1319,4 +1322,223 @@ function draw(){var q=el('q').value.toLowerCase();var r=ROWS.filter(function(x){
     google.script.run.withSuccessHandler(function(r){say(r.msg,r.ok)}).withFailureHandler(function(e){say(e.message,false)}).addFromPool(x.code)}})}
 el('q').oninput=draw;
 google.script.run.withSuccessHandler(function(r){if(!r.ok){say(r.msg,false);return}ROWS=r.rows;say(ROWS.length?ROWS.length+' players in the pool.':'The pool is empty so far.',true);draw()}).withFailureHandler(function(e){say(e.message,false)}).getPool();
+</script></body></html>`;
+
+// ---------- Migrate players (panel) ----------
+// Migration tab: players loaded from one source list (values, so ticks stay with their rows when sorted).
+// Ready for Migration tab: ticked players gathered from any number of sources. Migrate copies them into a
+// new workbook (a copy of the blank Starter) or an existing one, re-reading each player from his source first.
+var MIG_TAB = 'Migration', READY_TAB = 'Ready for Migration';
+var MIG_FIELDS = [['type', 'player type'], ['first', 'first name'], ['last', 'last name'], ['season', 'season'], ['jersey', '#'],
+  ['pos', 'position'], ['profile', 'athlete profile'], ['bones', 'where they made'], ['clone', 'nfl all time great'],
+  ['check', 'clone check'], ['picked', 'clone picked by'], ['source', 'source'], ['squads', 'squads'], ['skin', 'skin tone'],
+  ['affil', 'affiliation']];
+var MIG_HEAD = ['#', '✓'].concat(['Player type', 'First Name', 'Last Name', 'Season', '#', 'Position', 'Athlete profile',
+  'Where they made their bones', 'NFL All Time Great clone', 'Clone check', 'Clone picked by', 'Source', 'Squads', 'Skin tone',
+  'Affiliation', 'From list', 'From id']);
+
+function showMigratePanel() {
+  SpreadsheetApp.getUi().showSidebar(HtmlService.createHtmlOutput(MIG_HTML).setTitle('Migrate players'));
+}
+
+function migOpen(src) {
+  src = String(src || '').trim();
+  if (src === 'me') return SpreadsheetApp.getActive();
+  if (src === 'master') return SpreadsheetApp.openById(MASTER_ID);
+  var m = src.match(/[-\w]{25,}/);
+  if (!m) throw new Error('That does not look like a Google Sheets link.');
+  return SpreadsheetApp.openById(m[0]);
+}
+
+// Reads any Madden list's Players tab (old or new layout): finds the heading row and the columns by name.
+function migReadPlayers(ss) {
+  var pl = ss.getSheetByName(SHEET);
+  if (!pl) throw new Error('"' + ss.getName() + '" has no Players tab, so it is not a Madden list.');
+  var top = pl.getRange(1, 1, 3, pl.getLastColumn()).getValues(), hr = -1;
+  for (var r = 0; r < 3 && hr < 0; r++) for (var c = 0; c < top[r].length; c++) if (String(top[r][c]).toLowerCase().indexOf('first name') === 0) { hr = r; break; }
+  if (hr < 0) throw new Error('Could not find the Players headings in "' + ss.getName() + '".');
+  var col = {};
+  top[hr].forEach(function (h, c) {
+    h = String(h).trim().toLowerCase();
+    MIG_FIELDS.forEach(function (f) { if (col[f[0]] === undefined && h.indexOf(f[1]) === 0 && !(f[0] === 'source' && h.indexOf('source') !== 0)) col[f[0]] = c; });
+  });
+  var first = hr + 2, n = Math.max(0, pl.getLastRow() - first + 1), rows = [];
+  if (n) pl.getRange(first, 1, n, pl.getLastColumn()).getValues().forEach(function (v) {
+    var o = {}; MIG_FIELDS.forEach(function (f) { o[f[0]] = col[f[0]] === undefined ? '' : v[col[f[0]]]; });
+    o.first = String(o.first).trim(); o.last = String(o.last).trim(); o.pos = String(o.pos).trim();
+    if (o.first || o.last) rows.push(o);
+  });
+  return { rows: rows, newLayout: hr === 1, sheet: pl, headRow: hr + 1, col: col };
+}
+
+function migKey(o) { return (o.first + '|' + o.last + '|' + o.pos).toLowerCase(); }
+
+function migTab(name) {
+  var ss = SpreadsheetApp.getActive(), sh = ss.getSheetByName(name);
+  if (!sh) {
+    sh = ss.insertSheet(name);
+    sh.getRange(1, 1, 1, MIG_HEAD.length).setValues([MIG_HEAD]).setFontWeight('bold').setBackground('#1f3864').setFontColor('#ffffff').setWrap(true);
+    sh.getRange(1, 2).setValue(name === MIG_TAB ? '✓ Move' : '✓ Remove');
+    sh.setFrozenRows(1); sh.setFrozenColumns(5); sh.hideColumns(MIG_HEAD.length);
+    sh.getRange(1, 1).setNote(name === MIG_TAB
+      ? 'Players loaded from one list by Madden Tools > Migrate players. These are copies (values), so ticks stay with their players when you sort with the filter arrows. Tick the ones you want, then Add ticked in the panel.'
+      : 'Players waiting to be migrated, from any number of lists (From list). Tick ✓ Remove and use Remove ticked in the panel to take someone off. Migrate in the panel copies everyone here.');
+  }
+  return sh;
+}
+
+function migWrite(sh, rows, append) {
+  if (!append && sh.getLastRow() > 1) sh.getRange(2, 1, sh.getLastRow() - 1, MIG_HEAD.length).clearContent().removeCheckboxes();
+  if (!rows.length) return;
+  var start = append ? Math.max(sh.getLastRow(), 1) + 1 : 2;
+  sh.getRange(start, 1, rows.length, MIG_HEAD.length).setValues(rows);
+  sh.getRange(start, 2, rows.length, 1).insertCheckboxes();
+  if (sh.getFilter()) sh.getFilter().remove();
+  sh.getRange(1, 1, sh.getLastRow(), MIG_HEAD.length).createFilter();
+  sh.getRange(2, 1, sh.getLastRow() - 1, 1).setFormula('=ROW()-1');
+}
+
+function migLoad(src) {
+  var ss = migOpen(src), d = migReadPlayers(ss), name = ss.getName(), id = ss.getId();
+  var rows = d.rows.map(function (o) {
+    return ['', false].concat(MIG_FIELDS.map(function (f) { return o[f[0]]; })).concat([name, id]);
+  });
+  var sh = migTab(MIG_TAB);
+  migWrite(sh, rows, false);
+  SpreadsheetApp.getActive().setActiveSheet(sh);
+  return { ok: true, msg: rows.length + ' players loaded from "' + name + '". Tick the ones you want (sort with the filter arrows), then Add ticked.' };
+}
+
+function migRows(sh) {
+  return sh.getLastRow() > 1 ? sh.getRange(2, 1, sh.getLastRow() - 1, MIG_HEAD.length).getValues() : [];
+}
+function migObj(r) { var o = {}; MIG_FIELDS.forEach(function (f, i) { o[f[0]] = r[2 + i]; }); o.from = r[MIG_HEAD.length - 2]; o.fromId = r[MIG_HEAD.length - 1]; return o; }
+
+function migAddTicked() {
+  var ss = SpreadsheetApp.getActive(), mg = ss.getSheetByName(MIG_TAB);
+  if (!mg) return { ok: false, msg: 'Load players first.' };
+  var all = migRows(mg), picked = all.filter(function (r) { return r[1] === true; });
+  if (!picked.length) return { ok: false, msg: 'Nothing is ticked on the Migration tab.' };
+  var rd = migTab(READY_TAB), have = {};
+  migRows(rd).forEach(function (r) { have[migKey(migObj(r)) + '@' + r[MIG_HEAD.length - 1]] = true; });
+  var add = picked.filter(function (r) { var k = migKey(migObj(r)) + '@' + r[MIG_HEAD.length - 1]; if (have[k]) return false; have[k] = true; return true; })
+    .map(function (r) { var c = r.slice(); c[1] = false; return c; });
+  migWrite(rd, add, true);
+  mg.getRange(2, 2, all.length, 1).setValue(false);
+  var total = migRows(rd).length;
+  return { ok: true, msg: add.length + ' added (' + (picked.length - add.length) + ' already there). Ready for Migration now has ' + total + '.' };
+}
+
+function migRemoveTicked() {
+  var rd = SpreadsheetApp.getActive().getSheetByName(READY_TAB);
+  if (!rd) return { ok: false, msg: 'Ready for Migration is empty.' };
+  var keep = migRows(rd).filter(function (r) { return r[1] !== true; }), gone = migRows(rd).length - keep.length;
+  migWrite(rd, keep, false);
+  return { ok: true, msg: gone + ' removed. ' + keep.length + ' left in Ready for Migration.' };
+}
+
+function migRun(dest) {
+  var ss = SpreadsheetApp.getActive(), rd = ss.getSheetByName(READY_TAB), ready = rd ? migRows(rd) : [];
+  if (!ready.length) return { ok: false, msg: 'Ready for Migration is empty. Load players and Add ticked first.' };
+  var target;
+  if (dest.mode === 'new') {
+    var nm = String(dest.name || '').trim();
+    if (!nm) return { ok: false, msg: 'Type a name for the new workbook.' };
+    target = SpreadsheetApp.openById(STARTER_ID).copy(nm);
+  } else {
+    try { target = migOpen(dest.url); } catch (e) { return { ok: false, msg: e.message }; }
+    if (target.getId() === ss.getId() && dest.url !== 'me') { /* moving into this same list is allowed */ }
+  }
+  var td;
+  try { td = migReadPlayers(target); } catch (e) { return { ok: false, msg: e.message }; }
+  if (!td.newLayout || td.col.first !== PC.first - 1 || td.col.picked !== PC.picked - 1 || td.col.affil !== PC.affil - 1) return { ok: false, msg: '"' + target.getName() + '" uses the old layout. Open it once with the new Madden Tools script and migrate it first.' };
+  var have = {}; td.rows.forEach(function (o) { have[migKey(o)] = true; });
+  // re-read every player from his source list, plus his Custom Players row
+  var bySrc = {}, srcData = {}, skipped = [], moved = [], today = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'M/d/yyyy');
+  ready.forEach(function (r) { var o = migObj(r); (bySrc[o.fromId] = bySrc[o.fromId] || []).push(o); });
+  Object.keys(bySrc).forEach(function (id) {
+    var sss = id === ss.getId() ? ss : SpreadsheetApp.openById(id), sd = migReadPlayers(sss), map = {}, cus = {};
+    sd.rows.forEach(function (o) { map[migKey(o)] = o; });
+    var cs = sss.getSheetByName(CUSTOM_TAB);
+    if (cs && cs.getLastRow() >= CUSTOM_FIRST) cs.getRange(CUSTOM_FIRST, 1, cs.getLastRow() - CUSTOM_FIRST + 1, cs.getLastColumn()).getValues()
+      .forEach(function (c) { if (c[0]) cus[String(c[0]).toLowerCase()] = c; });
+    srcData[id] = { name: sss.getName(), map: map, cus: cus };
+  });
+  var pv = td.sheet, cols = td.col, firstRow = td.headRow + 1;
+  var used = pv.getRange(firstRow, cols.first + 1, LAST_ROW - firstRow + 1, 2).getValues(), free = [];
+  used.forEach(function (u, i) { if (String(u[0]).trim() === '' && String(u[1]).trim() === '') free.push(firstRow + i); });
+  var st = target.getSheetByName('Settings'), bonesR = st ? st.getRange(BONES_FIRST, 3, BONES_LAST - BONES_FIRST + 1, 1) : null;
+  var bones = bonesR ? bonesR.getValues().map(function (b) { return String(b[0]).trim(); }) : [];
+  var tcs = target.getSheetByName(CUSTOM_TAB), customAdds = [];
+  Object.keys(bySrc).forEach(function (id) {
+    bySrc[id].forEach(function (o) {
+      var who = o.first + ' ' + o.last + (o.pos ? ' (' + o.pos + ')' : ''), cur = srcData[id].map[migKey(o)];
+      if (!cur) { skipped.push(who + ': no longer on "' + srcData[id].name + '"'); return; }
+      if (!cur.first || !cur.last) { skipped.push(who + ': needs a first and last name'); return; }
+      if (have[migKey(cur)]) { skipped.push(who + ': already on "' + target.getName() + '"'); return; }
+      var cu = srcData[id].cus[migKey(cur)];
+      if (cu) { var bad = []; for (var c = 5; c < 28; c++) { var v = cu[c]; if (v !== '' && v !== null && (isNaN(Number(v)) || Number(v) < 0 || Number(v) !== Math.floor(Number(v)))) bad.push(v); }
+        if (bad.length) { skipped.push(who + ': his custom numbers are broken (' + bad.slice(0, 3).join(', ') + ')'); return; } }
+      if (!free.length) { skipped.push(who + ': "' + target.getName() + '" is full (1,500 players)'); return; }
+      var row = free.shift(), b = String(cur.bones).trim();
+      if (b && bones.indexOf(b) < 0) { var e = bones.indexOf(''); if (e >= 0) { bones[e] = b; } }
+      var src = String(cur.source || '').trim(), note = 'Migrated from ' + srcData[id].name + ', ' + today;
+      var vals = { first: cur.first, last: cur.last, season: cur.season, jersey: cur.jersey, pos: cur.pos, profile: cur.profile,
+        bones: cur.bones, clone: cur.clone, picked: cur.picked, source: src ? src + '; ' + note : note, squads: '', skin: cur.skin, affil: cur.affil };
+      // two blocks, so the Clone check formula column (K) is never written to
+      pv.getRange(row, cols.first + 1, 1, 8).setValues([[vals.first, vals.last, vals.season, vals.jersey, vals.pos, vals.profile, vals.bones, vals.clone]]);
+      pv.getRange(row, cols.picked + 1, 1, 5).setValues([[vals.picked, vals.source, vals.squads, vals.skin, vals.affil]]);
+      if (cu) customAdds.push(cu);
+      have[migKey(cur)] = true; moved.push(who);
+    });
+  });
+  if (bonesR) bonesR.setValues(bones.map(function (b) { return [b]; }));
+  if (customAdds.length && tcs) customAdds.forEach(function (c) { tcs.appendRow(c.slice(0, tcs.getMaxColumns())); });
+  if (moved.length) migWrite(rd, [], false);
+  else if (skipped.length) { /* keep the list so nothing is lost */ }
+  var msg = moved.length + ' player' + (moved.length === 1 ? '' : 's') + ' migrated to "' + target.getName() + '".' +
+    (customAdds.length ? ' ' + customAdds.length + ' custom (B/C) row' + (customAdds.length === 1 ? '' : 's') + ' copied too.' : '') +
+    (skipped.length ? '\n\nSkipped (' + skipped.length + '):\n- ' + skipped.join('\n- ') : '') +
+    (moved.length ? '\n\nPut them on squads in column N of the new list. Their clone lists and colors fix themselves the next time it opens.' : '');
+  return { ok: moved.length > 0, msg: msg, url: target.getUrl(), name: target.getName() };
+}
+
+var MIG_HTML = String.raw`<!doctype html>
+<html><head><base target="_top"><style>
+  body{font:14px Arial,sans-serif;margin:10px;color:#222}
+  h4{margin:14px 0 6px;color:#1f3864;border-bottom:1px solid #ddd;padding-bottom:3px}
+  label{display:block;margin:4px 0}input[type=text]{width:95%;padding:5px;font-size:13px}
+  button{padding:6px 12px;font-size:14px;cursor:pointer;margin:6px 6px 0 0}
+  .go{background:#1f6f3a;color:#fff;border:0;border-radius:4px}
+  #msg{white-space:pre-wrap;font-size:13px;margin-top:10px}.ok{color:#137333}.err{color:#b3261e}
+  .note{font-size:12px;color:#555}
+</style></head><body>
+<h4>1. Pick a source</h4>
+<label><input type="radio" name="src" value="me" checked> My list (this workbook)</label>
+<label><input type="radio" name="src" value="master"> Master Madden List</label>
+<label><input type="radio" name="src" value="link"> Another list (paste its link)</label>
+<input type="text" id="srcLink" placeholder="https://docs.google.com/spreadsheets/d/...">
+<button id="load">Load players</button>
+<p class="note">They fill the Migration tab. Tick the ones you want there (sort with the filter arrows).</p>
+<h4>2. Gather</h4>
+<button id="add">Add ticked</button><button id="rm">Remove ticked from Ready</button>
+<p class="note">Ticked players go to Ready for Migration. Repeat with other sources as often as you like.</p>
+<h4>3. Migrate</h4>
+<label><input type="radio" name="dst" value="new" checked> New workbook named:</label>
+<input type="text" id="newName" placeholder="e.g. Malcolm's Glassboro List">
+<label><input type="radio" name="dst" value="existing"> Existing workbook (paste its link)</label>
+<input type="text" id="dstLink" placeholder="https://docs.google.com/spreadsheets/d/...">
+<button id="go" class="go">Migrate</button>
+<div id="msg"></div><div id="open"></div>
+<script>
+function el(i){return document.getElementById(i)}
+function val(n){var r=document.querySelector('input[name='+n+']:checked');return r?r.value:''}
+function say(t,ok){el('msg').className=ok?'ok':'err';el('msg').textContent=t}
+function run(fn,arg,busy){say(busy,true);el('open').innerHTML='';var r=google.script.run.withSuccessHandler(function(x){say(x.msg,x.ok);
+  if(x.url)el('open').innerHTML='<p><a href="'+x.url+'" target="_blank"><b>Open '+x.name.replace(/[<>&]/g,'')+'</b></a></p>'}).withFailureHandler(function(e){say(e.message,false)});
+  arg===undefined?r[fn]():r[fn](arg)}
+el('load').onclick=function(){var s=val('src');run('migLoad',s==='link'?el('srcLink').value:s,'Loading...')};
+el('add').onclick=function(){run('migAddTicked',undefined,'Adding...')};
+el('rm').onclick=function(){run('migRemoveTicked',undefined,'Removing...')};
+el('go').onclick=function(){var d=val('dst');run('migRun',d==='new'?{mode:'new',name:el('newName').value}:{mode:'existing',url:el('dstLink').value},'Migrating... (a new workbook takes about 20 seconds)')};
 </script></body></html>`;
