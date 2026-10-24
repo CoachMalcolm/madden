@@ -29,6 +29,7 @@ Put the people you played with and against into **Madden NFL 08 (PC)**. Each per
 
 - `index.html`: the User Guide (GitHub Pages serves it).
 - `kit/`: the Roster Kit source (builder, base rosters, ratings data).
+- `workbook/Madden Tools v6 (automatic).txt`: the workbook's Madden Tools script (paste into Extensions > Apps Script).
 - `.github/workflows/build-windows.yml`: builds `MaddenRosterKit.exe` and the download zip on GitHub.
 - `CREDITS.md`: whose rosters and tools this is built on.
 - `CHANGELOG.md`: what changed and when.

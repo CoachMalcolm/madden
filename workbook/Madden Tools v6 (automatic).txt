@@ -1,0 +1,761 @@
+/**
+ * Madden Tools for Master Madden List v6 - October 23, 2026 (automatic version)
+ * Paste this whole file into Extensions > Apps Script, replacing EVERYTHING there. Save, then reload the workbook.
+ *
+ * MENU: Madden Tools (Madden Tools > What do these do? shows the same list in the sheet)
+ *   - Find a clone (search panel)...          Search NFL players; "Use" puts the clone on the selected row.
+ *   - Sort players (by place, then name)      Bones order from Settings, then last name, first name, position.
+ *   - Rebuild clone dropdowns (fix wrong ...)  Resets every row's clone list from its Position. Also automatic.
+ *   - Apply number of squads (show/hide ...)  Shows that many squad rows and Rosters cards. Also automatic.
+ *   - Apply colors (match rows to Settings)   Colors Players rows from the Settings cells. Also automatic.
+ *   - Clean up squads (remove old squad ...)  Finds squad names no longer on Build Your Squads; asks first.
+ *   - Refresh everything (run all fixes now)  Runs every automatic job at once.
+ *   - What do these do?                       Shows this list.
+ *
+ * AUTOMATIC (no menu needed):
+ *   - Spare rows: Players always shows 10 empty rows below the last player (Settings: Spare rows shown).
+ *   - Clone dropdowns: changing or pasting a Position (F) or Clone (I) resets that row's clone list;
+ *     every row is checked when the workbook opens and after sorting.
+ *   - Row colors: come from the Settings "made their bones" cells. Re-applied when the workbook opens,
+ *     when a place name changes, and when you click back onto Players after recoloring a Settings cell.
+ *   - Number of squads: hides/shows squad rows and Rosters cards when you change it, and on open.
+ *   - Squads: renaming moves its players; deleting asks to take it off them; Replaces refuses a team
+ *     another squad has and asks before replacing a real NFL team.
+ * Nothing here reads the Athlete profile column (G). Notes are only notes.
+ */
+
+var SHEET = 'Players';
+var GREATS = 'Madden Greats';
+var LISTS = 'Clone Lists';
+var SQUADS = 'Build Your Squads';
+var BONES_FIRST = 18, BONES_LAST = 40;   // Settings!C18:C40 = Where they made their bones
+var FIRST_ROW = 2, LAST_ROW = 1501;
+var POS_COL = 6;     // F
+var CLONE_COL = 9;   // I
+var POS = ['QB', 'HB', 'FB', 'WR', 'TE', 'LT', 'LG', 'C', 'RG', 'RT',
+           'LE', 'RE', 'DT', 'LOLB', 'MLB', 'ROLB', 'CB', 'FS', 'SS', 'K', 'P'];
+
+function onOpen() {
+  SpreadsheetApp.getUi()
+    .createMenu('Madden Tools')
+    .addItem('Find a clone (search panel)...', 'showFinder')
+    .addSeparator()
+    .addItem('Sort players (by place, then name)', 'sortPlayers')
+    .addItem('Rebuild clone dropdowns (fix wrong clone lists)', 'rebuildCloneDropdowns')
+    .addItem('Apply number of squads (show/hide squad rows)', 'applySquadCount')
+    .addItem('Apply colors (match rows to Settings)', 'applyColors')
+    .addItem('Clean up squads (remove old squad names)', 'cleanUpSquads')
+    .addSeparator()
+    .addItem('Refresh everything (run all fixes now)', 'refreshEverything')
+    .addItem('What do these do?', 'showMenuHelp')
+    .addToUi();
+  autoTidy(true);
+}
+
+// Every automatic job, each on its own so one failure (e.g. a viewer without edit rights) can't stop the rest.
+function autoTidy(quiet) {
+  var jobs = [function () { applySquadCount(true); }, function () { keepSpareRows(); },
+              function () { applyColors(true); }, function () { rebuildCloneDropdowns(true); }];
+  jobs.forEach(function (job) { try { job(); } catch (err) {} });
+}
+
+// One line per menu item. Keep this list, the menu above, and READ ME FIRST (MADDEN TOOLS MENU) in step.
+var MENU_HELP = [
+  ['Find a clone (search panel)', 'Opens a search panel on the right. Search NFL players by name, team, season, jersey, overall or two ratings, then click Use to put that clone on the row you selected.'],
+  ['Sort players (by place, then name)', 'Sorts Players by where they made their bones (Settings order), then last name, first name, position. Run it when you want the list tidy.'],
+  ['Rebuild clone dropdowns (fix wrong clone lists)', 'Each Clone list only shows players at that row\'s Position. If a row offers the wrong position, this resets every row. Also runs by itself on open, after sorting, and after pasting.'],
+  ['Apply number of squads (show/hide squad rows)', 'Shows as many squad rows and Rosters cards as Number of squads, and hides the rest. Also runs by itself when the number changes and on open.'],
+  ['Apply colors (match rows to Settings)', 'Colors each Players row like its place\'s cell on Settings. Also runs by itself on open and when you click back onto Players.'],
+  ['Clean up squads (remove old squad names)', 'Finds squad names still on players that are no longer on Build Your Squads, and asks before removing them.'],
+  ['Refresh everything (run all fixes now)', 'Runs every automatic job at once: squad rows, spare rows, colors, clone lists. Use it if something looks off.'],
+  ['Automatic, no menu', 'Players always keeps 10 empty rows below the last player (Settings: Spare rows shown).']
+];
+
+function showMenuHelp() {
+  var html = '<div style="font:13px Arial,sans-serif;line-height:1.45">' + MENU_HELP.map(function (m) {
+    return '<p style="margin:0 0 10px"><b>' + m[0] + '</b><br>' + m[1] + '</p>';
+  }).join('') + '</div>';
+  SpreadsheetApp.getUi().showModalDialog(HtmlService.createHtmlOutput(html).setWidth(460).setHeight(520), 'Madden Tools: what each item does');
+}
+
+function refreshEverything() {
+  autoTidy(false);
+  SpreadsheetApp.getActive().toast('Squad rows, spare rows, row colors and clone dropdowns are all up to date.', 'Madden Tools', 5);
+}
+
+// Recoloring a Settings cell is a format change, which onEdit never sees. So when you come back to
+// Players, check whether the row colors still match Settings and re-apply them if not.
+function onSelectionChange(e) {
+  try {
+    var sh = e.range.getSheet();
+    if (sh.getName() !== SHEET) return;
+    if (!colorsUpToDate()) applyColors(true);
+  } catch (err) {}
+}
+
+// ---------- Position-filtered dropdown ----------
+
+function onEdit(e) {
+  var r = e.range, sh = r.getSheet();
+  if (sh.getName() === SQUADS) return onSquadsEdit(e);
+  if (sh.getName() === 'Settings' && r.getColumn() === 3 && r.getRow() >= BONES_FIRST) { try { applyColors(true); } catch (err) {} return; }
+  if (sh.getName() !== SHEET) return;
+  try { keepSpareRows(sh); } catch (err) {}
+  var c0 = r.getColumn(), c1 = c0 + r.getNumColumns() - 1;
+  var hitsPos = POS_COL >= c0 && POS_COL <= c1, hitsClone = CLONE_COL >= c0 && CLONE_COL <= c1;
+  if (!hitsPos && !hitsClone) return;
+  if (hitsClone && !hitsPos && r.getNumRows() === 1 && r.getNumColumns() === 1) return;   // picking from the list: nothing to reset
+  var r0 = Math.max(r.getRow(), FIRST_ROW);
+  var r1 = Math.min(r.getRow() + r.getNumRows() - 1, LAST_ROW);
+  if (r1 < r0) return;
+  var pos = sh.getRange(r0, POS_COL, r1 - r0 + 1, 1).getValues();
+  var lists = sh.getParent().getSheetByName(LISTS);
+  var rules = pos.map(function (p, i) { return [ruleFor(String(p[0]).trim(), r0 + i, lists)]; });
+  sh.getRange(r0, CLONE_COL, rules.length, 1).setDataValidations(rules);
+}
+
+
+
+// ---------- Row colors from Settings ----------
+// Each Bones place in Settings!C18:C40 is formatted the way its Players rows should look.
+// This rebuilds only the rules it owns (row colors by column H, and the white Squads cell);
+// every other coloring rule on Players (missing position, clone check, name check) is kept.
+
+// True when every colored Settings place already has a matching row rule on Players (same colors).
+function colorsUpToDate() {
+  var ss = SpreadsheetApp.getActive(), st = ss.getSheetByName('Settings'), pl = ss.getSheetByName(SHEET);
+  var cells = st.getRange(BONES_FIRST, 3, BONES_LAST - BONES_FIRST + 1, 1);
+  var names = cells.getValues(), bgs = cells.getBackgrounds(), fgs = cells.getFontColors();
+  var have = {};
+  pl.getConditionalFormatRules().forEach(function (rule) {
+    var b = rule.getBooleanCondition();
+    if (!b || b.getCriteriaType() !== SpreadsheetApp.BooleanCriteria.CUSTOM_FORMULA) return;
+    var f = String(b.getCriteriaValues()[0]);
+    if (f.indexOf('=$H2=') === 0) have[f] = (String(b.getBackground() || '') + '|' + String(b.getFontColor() || '')).toLowerCase();
+  });
+  var want = 0;
+  for (var i = 0; i < names.length; i++) {
+    var name = String(names[i][0]).trim();
+    if (!name) continue;
+    var bg = String(bgs[i][0]).toLowerCase(), fg = String(fgs[i][0]).toLowerCase();
+    if ((bg === '#ffffff' || bg === '') && (fg === '#000000' || fg === '')) continue;
+    want++;
+    var f = '=$H2="' + name.replace(/"/g, '""') + '"';
+    if (have[f] !== bg + '|' + fg) return false;
+  }
+  return want === Object.keys(have).length;
+}
+
+function applyColors(quiet) {
+  var ss = SpreadsheetApp.getActive(), st = ss.getSheetByName('Settings'), pl = ss.getSheetByName(SHEET);
+  var n = BONES_LAST - BONES_FIRST + 1;
+  var cells = st.getRange(BONES_FIRST, 3, n, 1);
+  var names = cells.getValues(), bgs = cells.getBackgrounds(), fgs = cells.getFontColors(), wts = cells.getFontWeights();
+  var lastCol = pl.getMaxColumns(), rows = LAST_ROW - FIRST_ROW + 1;
+  var rowRange = pl.getRange(FIRST_ROW, 1, rows, lastCol);
+  var head = pl.getRange(1, 1, 1, lastCol).getValues()[0], mCol = -1;
+  for (var c = 0; c < head.length; c++) if (String(head[c]).trim().toLowerCase() === 'squads') mCol = c + 1;
+  var keep = pl.getConditionalFormatRules().filter(function (rule) {
+    var b = rule.getBooleanCondition();
+    if (!b || b.getCriteriaType() !== SpreadsheetApp.BooleanCriteria.CUSTOM_FORMULA) return true;
+    var f = String(b.getCriteriaValues()[0]);
+    var mine = f.indexOf('=$H2=') === 0 || f.indexOf('=AND($B2<>"",$H2<>"",NOT(OR($H2=') === 0 || f === '=$M2<>""';
+    return !mine;
+  });
+  var made = [], colored = 0;
+  if (mCol > 0) {
+    var mLetter = pl.getRange(1, mCol).getA1Notation().replace(/\d+/g, '');
+    made.push(SpreadsheetApp.newConditionalFormatRule()
+      .whenFormulaSatisfied('=$' + mLetter + '2<>""').setBackground('#ffffff')
+      .setRanges([pl.getRange(FIRST_ROW, mCol, rows, 1)]).build());
+  }
+  var rowRules = [];
+  for (var i = 0; i < n; i++) {
+    var name = String(names[i][0]).trim();
+    if (!name) continue;
+    var bg = String(bgs[i][0]).toLowerCase(), fg = String(fgs[i][0]).toLowerCase(), bold = wts[i][0] === 'bold';
+    if ((bg === '#ffffff' || bg === '') && (fg === '#000000' || fg === '')) continue;   // plain cell = no row color
+    var rule = SpreadsheetApp.newConditionalFormatRule()
+      .whenFormulaSatisfied('=$H2="' + name.replace(/"/g, '""') + '"')
+      .setBackground(bg).setFontColor(fg).setBold(bold).setRanges([rowRange]).build();
+    rowRules.push(rule); colored++;
+  }
+  pl.setConditionalFormatRules(made.concat(keep).concat(rowRules));   // white Squads cell first, row colors last
+  if (!quiet) ss.toast('Row colors applied for ' + colored + ' place' + (colored === 1 ? '' : 's') + ' from Settings.', 'Madden Tools', 4);
+}
+
+// ---------- Build Your Squads: which layout is this? ----------
+// Row layout: a header row with "Squad name" then "Replaces", and a "Number of squads" cell.
+// Column layout (original): labels "Squad name" / "Replaces" down column A, six squads across.
+
+function squadLayout(sh) {
+  var top = sh.getRange(1, 1, 6, Math.min(sh.getMaxColumns(), 30)).getValues();
+  var L = null, countCell = null;
+  for (var r = 0; r < top.length; r++) {
+    for (var c = 0; c < top[r].length - 1; c++) {
+      var v = String(top[r][c]).trim().toLowerCase();
+      if (v === 'squad name' && c > 0 && String(top[r][c + 1]).trim().toLowerCase() === 'replaces') {
+        L = { hdr: r + 1, numCol: c, nameCol: c + 1, replCol: c + 2 };
+      }
+      if (v.indexOf('number of squads') === 0) countCell = { row: r + 1, col: c + 2 };
+    }
+  }
+  if (!L || !countCell) return null;
+  L.countRow = countCell.row; L.countCol = countCell.col;
+  L.first = L.hdr + 2;   // header, then the "Need" row, then squad 1
+  L.rows = 32;
+  return L;
+}
+
+function squadCount(sh, L) {
+  var n = Number(sh.getRange(L.countRow, L.countCol).getValue());
+  return (n >= 1 && n <= L.rows) ? Math.floor(n) : L.rows;
+}
+
+function applySquadCount(quiet) {
+  var sh = SpreadsheetApp.getActive().getSheetByName(SQUADS);
+  var L = squadLayout(sh);
+  if (!L) return;
+  var n = squadCount(sh, L);
+  sh.showRows(L.first, L.rows);
+  if (n < L.rows) sh.hideRows(L.first + n, L.rows - n);
+  // Rosters tab: two columns per squad card; show the first n cards, hide the rest.
+  var ro = SpreadsheetApp.getActive().getSheetByName('Rosters');
+  if (ro) {
+    var cols = Math.min(ro.getMaxColumns(), L.rows * 2);
+    ro.showColumns(1, cols);
+    if (n * 2 < cols) ro.hideColumns(n * 2 + 1, cols - n * 2);
+  }
+  if (!quiet) SpreadsheetApp.getActive().toast('Showing ' + n + ' squad row' + (n === 1 ? '' : 's') + '.', 'Madden Tools', 4);
+}
+
+function onSquadsEdit(e) {
+  var r = e.range, sh = r.getSheet();
+  var L = squadLayout(sh);
+  if (!L) return checkReplace(e);                     // original six-column layout
+  if (r.getRow() === L.countRow && r.getColumn() === L.countCol) return applySquadCount();
+  if (r.getNumRows() !== 1 || r.getNumColumns() !== 1) return;
+  if (r.getRow() < L.first || r.getRow() >= L.first + L.rows) return;
+  if (r.getColumn() === L.nameCol) return renameSquad(e, sh, L);
+  if (r.getColumn() === L.replCol) return checkReplaceRow(e, sh, L);
+}
+
+
+
+// ---------- Leftover squad names on players ----------
+
+function squadsColumn(pl) {
+  var head = pl.getRange(1, 1, 1, pl.getLastColumn()).getValues()[0];
+  for (var c = 0; c < head.length; c++) if (String(head[c]).trim().toLowerCase().indexOf('squads') === 0) return c + 1;
+  return -1;
+}
+
+// Take squad names off every player; returns how many players changed.
+function removeSquadNames(pl, col, gone) {
+  var rng = pl.getRange(FIRST_ROW, col, LAST_ROW - FIRST_ROW + 1, 1), vals = rng.getValues(), changed = 0;
+  for (var i = 0; i < vals.length; i++) {
+    var s = String(vals[i][0]);
+    if (!s) continue;
+    var parts = s.split(',').map(function (x) { return x.trim(); }).filter(String);
+    var keep = parts.filter(function (x) { return gone.indexOf(x) < 0; });
+    if (keep.length !== parts.length) { vals[i][0] = keep.join(', '); changed++; }
+  }
+  if (changed) rng.setValues(vals);
+  return changed;
+}
+
+// A squad name was deleted on Build Your Squads: offer to take it off its players.
+function removeSquadPrompt(sh, oldName) {
+  var pl = sh.getParent().getSheetByName(SHEET), col = squadsColumn(pl);
+  if (col < 0) return;
+  var n = pl.getRange(FIRST_ROW, col, LAST_ROW - FIRST_ROW + 1, 1).getValues().filter(function (r) {
+    return String(r[0]).split(',').map(function (x) { return x.trim(); }).indexOf(oldName) >= 0;
+  }).length;
+  if (!n) return;
+  var ui = SpreadsheetApp.getUi();
+  var a = ui.alert('Take "' + oldName + '" off its players?',
+    n + ' player' + (n === 1 ? ' is' : 's are') + ' still on "' + oldName + '".\n\n' +
+    'Yes: remove that squad from them (their other squads stay).\n' +
+    'No: leave it for now. If you are renaming, type the new name in this cell and you will be asked to move them.',
+    ui.ButtonSet.YES_NO);
+  if (a !== ui.Button.YES) return;
+  var changed = removeSquadNames(pl, col, [oldName]);
+  sh.getParent().toast('"' + oldName + '" removed from ' + changed + ' player' + (changed === 1 ? '' : 's') + '.', 'Madden Tools', 5);
+}
+
+// Menu: find squad names on players that are not on Build Your Squads, and offer to remove them.
+function cleanUpSquads() {
+  var ss = SpreadsheetApp.getActive(), sh = ss.getSheetByName(SQUADS), L = squadLayout(sh), ui = SpreadsheetApp.getUi();
+  if (!L) { ui.alert('Clean up squads', 'This workbook uses the six-column layout; its Squads column fills in by itself.', ui.ButtonSet.OK); return; }
+  var names = sh.getRange(L.first, L.nameCol, L.rows, 1).getValues().map(function (r) { return String(r[0]).trim(); });
+  var pl = ss.getSheetByName(SHEET), col = squadsColumn(pl);
+  if (col < 0) return;
+  var count = {};
+  pl.getRange(FIRST_ROW, col, LAST_ROW - FIRST_ROW + 1, 1).getValues().forEach(function (r) {
+    String(r[0]).split(',').forEach(function (x) { x = x.trim(); if (x && names.indexOf(x) < 0) count[x] = (count[x] || 0) + 1; });
+  });
+  var gone = Object.keys(count);
+  if (!gone.length) { ss.toast('Every squad on Players is on Build Your Squads. Nothing to clean up.', 'Madden Tools', 5); return; }
+  var list = gone.map(function (x) { return '  "' + x + '": ' + count[x] + ' player' + (count[x] === 1 ? '' : 's'); }).join('\n');
+  var a = ui.alert('Clean up squads',
+    'These squads are on players but not on Build Your Squads:\n\n' + list + '\n\n' +
+    'Yes: remove them from those players (their other squads stay).\n' +
+    'No: leave them. To keep players on a renamed squad, retype its name on Build Your Squads instead.',
+    ui.ButtonSet.YES_NO);
+  if (a !== ui.Button.YES) return;
+  var changed = removeSquadNames(pl, col, gone);
+  ss.toast('Removed ' + gone.length + ' old squad name' + (gone.length === 1 ? '' : 's') + ' from ' + changed + ' player' + (changed === 1 ? '' : 's') + '.', 'Madden Tools', 6);
+}
+
+// A squad name players still carry that is no longer on Build Your Squads (one only; else '').
+function strandedSquad(sh, L, newName) {
+  var names = sh.getRange(L.first, L.nameCol, L.rows, 1).getValues().map(function (r) { return String(r[0]).trim(); });
+  var pl = sh.getParent().getSheetByName(SHEET);
+  var head = pl.getRange(1, 1, 1, pl.getLastColumn()).getValues()[0], col = -1;
+  for (var c = 0; c < head.length; c++) if (String(head[c]).trim().toLowerCase().indexOf('squads') === 0) col = c + 1;
+  if (col < 0) return '';
+  var seen = {};
+  pl.getRange(FIRST_ROW, col, LAST_ROW - FIRST_ROW + 1, 1).getValues().forEach(function (r) {
+    String(r[0]).split(',').forEach(function (x) {
+      x = x.trim();
+      if (x && x !== newName && names.indexOf(x) < 0) seen[x] = true;
+    });
+  });
+  var left = Object.keys(seen);
+  return left.length === 1 ? left[0] : '';
+}
+
+// Renaming a squad carries the new name to every player on it, and to the pickers.
+function renameSquad(e, sh, L) {
+  var oldName = (e.oldValue === undefined) ? '' : String(e.oldValue).trim();
+  var newName = String(e.range.getValue()).trim();
+  if (!oldName && newName) {
+    // The old name was deleted first, then the new one typed: look for players left on a squad
+    // name that no longer exists, and offer to move them to the new name.
+    oldName = strandedSquad(sh, L, newName);
+    if (!oldName) return;
+    var ui = SpreadsheetApp.getUi();
+    if (ui.alert('Move players to "' + newName + '"?',
+        'Some players are still on "' + oldName + '", which is no longer a squad.\n\n' +
+        'Did you rename "' + oldName + '" to "' + newName + '"? Yes moves those players to "' + newName + '".',
+        ui.ButtonSet.YES_NO) !== ui.Button.YES) return;
+  }
+  if (oldName && !newName) return removeSquadPrompt(sh, oldName);
+  if (!oldName || !newName || oldName === newName) return;
+  if (newName.indexOf(',') >= 0) return;               // the Status column flags commas
+  var ss = sh.getParent(), pl = ss.getSheetByName(SHEET);
+  var head = pl.getRange(1, 1, 1, pl.getLastColumn()).getValues()[0];
+  var col = -1;
+  for (var c = 0; c < head.length; c++) if (String(head[c]).trim().toLowerCase().indexOf('squads') === 0) col = c + 1;
+  var moved = 0;
+  if (col > 0) {
+    var rng = pl.getRange(FIRST_ROW, col, LAST_ROW - FIRST_ROW + 1, 1), vals = rng.getValues();
+    for (var i = 0; i < vals.length; i++) {
+      var s = String(vals[i][0]);
+      if (!s) continue;
+      var parts = s.split(',').map(function (x) { return x.trim(); });
+      var k = parts.indexOf(oldName);
+      if (k >= 0) { parts[k] = newName; vals[i][0] = parts.join(', '); moved++; }
+    }
+    if (moved) rng.setValues(vals);
+  }
+  var mu = ss.getSheetByName('Matchup');
+  if (mu) ['B4', 'B5'].forEach(function (a) { if (String(mu.getRange(a).getValue()).trim() === oldName) mu.getRange(a).setValue(newName); });
+  var pick = sh.createTextFinder('Show the roster for').findNext();
+  if (pick) { var pc = pick.offset(0, 1); if (String(pc.getValue()).trim() === oldName) pc.setValue(newName); }
+  ss.toast('"' + oldName + '" renamed to "' + newName + '" on ' + moved + ' player' + (moved === 1 ? '' : 's') +
+    '. Its chips are grey now: to color them, click a Squads cell on Players > Data > Data validation > the rule > pick a color beside "' +
+    newName + '" > Done.', 'Madden Tools', 12);
+}
+
+// Replaces, one-squad-per-row layout: no team twice among the squads in use; real teams ask first.
+function checkReplaceRow(e, sh, L) {
+  var r = e.range, pick = String(r.getValue()).trim();
+  if (!pick) return;
+  var n = squadCount(sh, L);
+  var block = sh.getRange(L.first, L.numCol, L.rows, 3).getValues();   // #, name, replaces
+  for (var i = 0; i < block.length; i++) {
+    if (L.first + i === r.getRow()) continue;
+    if (Number(block[i][0]) > n) continue;
+    if (String(block[i][2]).trim() === pick) {
+      SpreadsheetApp.getUi().alert('Already taken',
+        pick + ' is already replaced by squad "' + (block[i][1] || ('#' + block[i][0])) + '".\n\n' +
+        'Each team can be replaced by only one squad. Pick a different team.',
+        SpreadsheetApp.getUi().ButtonSet.OK);
+      if (e.oldValue !== undefined) r.setValue(e.oldValue); else r.clearContent();
+      return;
+    }
+  }
+  confirmRealTeam(e, sh, pick);
+}
+
+function confirmRealTeam(e, sh, pick) {
+  var r = e.range;
+  var teams = sh.getParent().getSheetByName('Teams').getRange('B4:F304').getValues();
+  var row = null;
+  for (var i = 0; i < teams.length; i++) {
+    if (String(teams[i][0]).trim() === pick) { row = teams[i]; break; }
+  }
+  if (!row || row[4] === 'Reserve') return;
+  var ui = SpreadsheetApp.getUi();
+  var answer = ui.alert('Replace a real team?',
+    pick + ' is a real team, not a reserve slot.\n\n' +
+    'When the roster is built, this squad takes its place: the ' + pick +
+    ' players go to free agency and the ' + pick + ' will not be in that roster.\n\n' +
+    'Tip: a reserve slot (Broncos A, Raiders B ...) gives you the same uniforms and stadium ' +
+    'and keeps every real team.\n\nReplace the ' + pick + '?',
+    ui.ButtonSet.YES_NO);
+  if (answer !== ui.Button.YES) {
+    if (e.oldValue !== undefined) r.setValue(e.oldValue); else r.clearContent();
+  }
+}
+
+// ---------- Warning when a squad replaces a real team (original layout) ----------
+// Build Your Squads, "Replaces" row: picking a reserve slot (Broncos A ...) is quiet.
+// Picking any real team asks first; "No" puts the old pick back.
+
+function checkReplace(e) {
+  var r = e.range, sh = r.getSheet();
+  if (r.getNumRows() !== 1 || r.getNumColumns() !== 1) return;
+  var label = String(sh.getRange(r.getRow(), 1).getValue()).trim().toLowerCase();
+  if (label.indexOf('replaces') !== 0) return;
+  var pick = String(r.getValue()).trim();
+  if (!pick) return;
+  // The same team can't be replaced by two squads: undo the pick and say who has it.
+  var picks = sh.getRange(r.getRow(), 3, 1, 12).getValues()[0];
+  var names = sh.getRange(r.getRow() - 1, 3, 1, 12).getValues()[0];
+  for (var k = 0; k < picks.length; k += 2) {
+    if (3 + k === r.getColumn()) continue;
+    if (String(picks[k]).trim() === pick) {
+      SpreadsheetApp.getUi().alert('Already taken',
+        pick + ' is already replaced by squad "' + (names[k] || ('slot ' + (k / 2 + 1))) + '".\n\n' +
+        'Each team can be replaced by only one squad. Pick a different team.',
+        SpreadsheetApp.getUi().ButtonSet.OK);
+      if (e.oldValue !== undefined) r.setValue(e.oldValue); else r.clearContent();
+      return;
+    }
+  }
+  confirmRealTeam(e, sh, pick);
+}
+
+function ruleFor(position, row, lists) {
+  var k = POS.indexOf(position);
+  if (k < 0) {
+    return SpreadsheetApp.newDataValidation()
+      .requireFormulaSatisfied('=$F' + row + '<>""')
+      .setAllowInvalid(false)
+      .setHelpText('Pick the Position in column F first (or use Madden Tools > Find a clone).')
+      .build();
+  }
+  var range = lists.getRange(2, k + 1, lists.getMaxRows() - 1, 1);
+  return SpreadsheetApp.newDataValidation()
+    .requireValueInRange(range, true)
+    .setAllowInvalid(false)
+    .setHelpText('Type part of a name, then pick a version (' + position + 's only). Or use Madden Tools > Find a clone.')
+    .build();
+}
+
+function rebuildCloneDropdowns(quiet) {
+  var ss = SpreadsheetApp.getActive();
+  var sh = ss.getSheetByName(SHEET);
+  var lists = ss.getSheetByName(LISTS);
+  var N = LAST_ROW - FIRST_ROW + 1;
+  var pos = sh.getRange(FIRST_ROW, POS_COL, N, 1).getValues();
+  var rules = pos.map(function (p, i) { return [ruleFor(String(p[0]).trim(), FIRST_ROW + i, lists)]; });
+  sh.getRange(FIRST_ROW, CLONE_COL, N, 1).setDataValidations(rules);
+  if (!quiet) ss.toast('Clone dropdowns rebuilt from each row\'s Position.', 'Madden Tools', 5);
+}
+
+// ---------- Spare rows (automatic) ----------
+// Players always shows every player plus N empty rows (Settings B10, "Spare rows shown"); rows past that stay hidden.
+
+function keepSpareRows(sh) {
+  var ss = SpreadsheetApp.getActive();
+  sh = sh || ss.getSheetByName(SHEET);
+  var spare = 10;
+  try { spare = Number(ss.getSheetByName('Settings').getRange('B10').getValue()) || 10; } catch (e) {}
+  var vals = sh.getRange(FIRST_ROW, 2, LAST_ROW - FIRST_ROW + 1, 8).getValues();   // B..I
+  var last = FIRST_ROW - 1;
+  for (var i = vals.length - 1; i >= 0; i--) {
+    if (vals[i].join('').trim() !== '') { last = FIRST_ROW + i; break; }
+  }
+  var need = Math.min(LAST_ROW, last + spare);
+  var ok = !sh.isRowHiddenByUser(need) && (need >= LAST_ROW || sh.isRowHiddenByUser(need + 1));
+  if (ok) return;
+  sh.showRows(FIRST_ROW, need - FIRST_ROW + 1);
+  if (need < LAST_ROW) sh.hideRows(need + 1, LAST_ROW - need);
+}
+
+// ---------- Find a clone (sidebar) ----------
+
+function showFinder() {
+  var html = HtmlService.createHtmlOutput(FINDER_HTML).setTitle('Find a clone');
+  SpreadsheetApp.getUi().showSidebar(html);
+}
+
+/** Whole list for the panel.
+ *  rows: [label, pos, ovr, team/era, name, jersey, season, rating1, rating2, ...]
+ *  names: the rating column headers (SPD, ACC, ...) from column K onward. */
+function getGreats() {
+  var g = SpreadsheetApp.getActive().getSheetByName(GREATS);
+  var n = g.getLastRow() - 1;
+  var cols = g.getLastColumn() - 2;                         // C..last
+  var hdr = g.getRange(1, 3, 1, cols).getValues()[0];
+  var v = g.getRange(2, 3, n, cols).getValues();
+  var names = hdr.slice(8).map(String);                     // K onward = individual ratings
+  var rows = v.map(function (r) {
+    return [r[0], r[1], r[2], r[3], r[4], r[6] === undefined ? '' : r[6], r[7] === undefined ? '' : r[7]].concat(r.slice(8));
+  });
+  return { names: names, rows: rows };
+}
+
+/** The row the user is on, so the panel can show it and preset the position. */
+function getSelectedRow() {
+  var ss = SpreadsheetApp.getActive();
+  var sh = ss.getActiveSheet();
+  if (sh.getName() !== SHEET) return { ok: false, msg: 'Click a player row on the ' + SHEET + ' tab.' };
+  var row = sh.getActiveCell().getRow();
+  if (row < FIRST_ROW || row > LAST_ROW) return { ok: false, msg: 'Click a player row (2-1501).' };
+  var v = sh.getRange(row, 2, 1, 5).getValues()[0]; // B..F
+  return { ok: true, row: row, name: (v[0] + ' ' + v[1]).trim(), pos: String(v[4]).trim() };
+}
+
+/** Put a clone on the selected row. Sets Position too if it was blank. */
+function useClone(label, pos) {
+  var sel = getSelectedRow();
+  if (!sel.ok) return sel;
+  var ss = SpreadsheetApp.getActive();
+  var sh = ss.getSheetByName(SHEET);
+  if (sel.pos && sel.pos !== pos) {
+    return { ok: false, msg: (sel.name || 'Row ' + sel.row) + ' is a ' + sel.pos + ' and this clone plays ' + pos +
+      '. Change Position (F) to ' + pos + ' first, or pick a ' + sel.pos + '.' };
+  }
+  if (!sel.pos) sh.getRange(sel.row, POS_COL).setValue(pos);
+  var cell = sh.getRange(sel.row, CLONE_COL);
+  cell.setDataValidation(ruleFor(pos, sel.row, ss.getSheetByName(LISTS)));
+  cell.setValue(label);
+  return { ok: true, msg: 'Row ' + sel.row + (sel.name ? ' (' + sel.name + ')' : '') + ': ' + label };
+}
+
+// ---------- Sort ----------
+
+function sortPlayers() {
+  var ss = SpreadsheetApp.getActive();
+  var sh = ss.getSheetByName(SHEET);
+  var N = LAST_ROW - FIRST_ROW + 1;
+  // Bones order comes from Settings (column C): Dodge Field, Twombly, Glassboro, Other, then any new places.
+  var BONES = ss.getSheetByName('Settings').getRange('C18:C40').getValues()
+    .map(function (r) { return String(r[0]).trim(); }).filter(String);
+
+  var leftRange = sh.getRange(FIRST_ROW, 2, N, 8);   // B..I
+  // Original layout: M (Squads) is automatic from the P-U tick boxes, so K..L and N..U move.
+  // Row layout (no tick boxes): M is where squads are picked, so K..O all move with the player.
+  var ticks = sh.getMaxColumns() >= 16 && String(sh.getRange(1, 16).getValue()).trim() !== '';
+  var kl = ticks ? sh.getRange(FIRST_ROW, 11, N, 2) : sh.getRange(FIRST_ROW, 11, N, 3);   // K..L or K..M
+  var nu = ticks ? sh.getRange(FIRST_ROW, 14, N, 8) : sh.getRange(FIRST_ROW, 14, N, 2);   // N..U or N..O
+  var left = leftRange.getValues();
+  var right = nu.getValues();
+  var klv = kl.getValues();
+
+  function s(v) { return String(v).trim().toLowerCase(); }
+  function key(i) {
+    var L = left[i], R = right[i];
+    if (s(L[0]) === '' && s(L[1]) === '') return [9999, '', '', '', 0];
+    var b = BONES.indexOf(String(L[6]).trim()); if (b < 0) b = BONES.length;
+    var aff = (BONES[b] === 'Other') ? (s(R[1]) || '\uffff') : '';
+    var p = POS.indexOf(String(L[4]).trim()); if (p < 0) p = 99;
+    return [b, aff, s(L[1]), s(L[0]), p];
+  }
+  var order = [];
+  for (var i = 0; i < N; i++) order.push({ i: i, k: key(i) });
+  order.sort(function (a, b) {
+    for (var j = 0; j < 5; j++) {
+      if (a.k[j] < b.k[j]) return -1;
+      if (a.k[j] > b.k[j]) return 1;
+    }
+    return a.i - b.i;
+  });
+  function pick(arr) { return order.map(function (o) { return arr[o.i]; }); }
+
+  // Column checks (names, season, #, position, bones and the rest) are the same on every row,
+  // so they stay where they are. Only the clone dropdown (I) depends on the row: clear it,
+  // move the values, then rebuild it from each row's position.
+  sh.getRange(FIRST_ROW, CLONE_COL, N, 1).clearDataValidations();
+  leftRange.setValues(pick(left));
+  kl.setValues(pick(klv));
+  nu.setValues(pick(right));
+  rebuildCloneDropdowns(true);
+  keepSpareRows(sh);
+  ss.toast('Sorted by Bones (Settings order), then last name, first name, position.', 'Madden Tools', 5);
+}
+
+// ---------- Sidebar page ----------
+
+var FINDER_HTML = String.raw`<!doctype html>
+<html><head><base target="_top"><style>
+  body{font:13px Arial,sans-serif;margin:10px;color:#222}
+  h3{margin:4px 0 8px;font-size:14px}
+  .row{display:flex;gap:6px;margin-bottom:6px}
+  .row label{flex:1;font-size:11px;color:#555}
+  input,select{width:100%;box-sizing:border-box;padding:5px;font-size:13px;border:1px solid #bbb;border-radius:4px}
+  #sel{background:#f3f6fb;border-radius:4px;padding:6px;margin-bottom:8px;font-size:12px}
+  #msg{font-size:12px;margin:6px 0;min-height:16px}
+  .ok{color:#137333}.err{color:#b3261e}
+  table{width:100%;border-collapse:collapse;font-size:12px}
+  td{padding:4px 3px;border-bottom:1px solid #eee;vertical-align:top}
+  td.n{width:34px;text-align:right;font-weight:bold}
+  button{padding:3px 8px;font-size:12px;cursor:pointer}
+  .small{font-size:11px;color:#666}
+  hr{border:0;border-top:1px solid #ddd;margin:12px 0}
+  a{color:#1a5fb4}
+  input::placeholder{color:#c4c4c4;font-style:italic}
+  .btns{display:flex;gap:6px;margin:4px 0 8px}
+  .btns button{flex:1;padding:6px}
+  .primary{background:#1a73e8;color:#fff;border:0;border-radius:4px}
+  .plain{background:#fff;border:1px solid #bbb;border-radius:4px}
+</style></head><body>
+<h3>1. Look up the real player</h3>
+<div class="small">Get his team, years, jersey # and position from Google, then search your list below.</div>
+<div class="row"><label>Player name<input id="real" placeholder="e.g. Eric Weddle"></label></div>
+<div class="row"><label>Team (optional)<input id="rteam" placeholder="e.g. Chargers"></label></div>
+<div class="btns">
+  <button class="primary" onclick="look('madden')">Google it (Madden)</button>
+  <button class="plain" onclick="look('pfr')">Pro-Football-Ref</button>
+</div>
+<div class="btns"><button class="plain" onclick="copyDown()">Search my list for this player &darr;</button></div>
+<hr>
+<h3>2. Find the clone in your Madden Greats list</h3>
+<div id="sel">Loading...</div>
+<div class="row"><label>Name (any part)<input id="q" placeholder="e.g. Weddle"></label></div>
+<div class="row">
+  <label>Position<select id="pos"><option value="">Any</option></select></label>
+  <label>Team<input id="team" placeholder="e.g. Chargers"></label>
+</div>
+<div class="row">
+  <label>Season<input id="yr" placeholder="e.g. 2007"></label>
+  <label>Jersey #<input id="jer" placeholder="e.g. 32"></label>
+  <label>Min overall<input id="ovr" placeholder="e.g. 85"></label>
+</div>
+<div id="ratbox">
+<div class="small" style="margin:2px 0 4px">Filter by up to two ratings. The list shows only the ratings that matter for the position you picked (all of them if Position is Any). Fill Min, Max or both.</div>
+<div class="row">
+  <label style="flex:2">Rating 1<select id="r1"><option value="">(none)</option></select></label>
+  <label>Min<input id="r1min" placeholder="e.g. 95"></label>
+  <label>Max<input id="r1max" placeholder="e.g. 100"></label>
+</div>
+<div class="row">
+  <label style="flex:2">Rating 2<select id="r2"><option value="">(none)</option></select></label>
+  <label>Min<input id="r2min" placeholder="e.g. 90"></label>
+  <label>Max<input id="r2max" placeholder="e.g. 99"></label>
+</div>
+<div class="small" style="margin-bottom:6px">Results sort by Rating 1 (highest first) when one is picked.</div>
+</div>
+<div class="row"><label><input type="checkbox" id="hof" style="width:auto"> Hall of Fame cards only</label></div>
+<div class="btns"><button class="plain" onclick="clearAll()">Clear / start fresh</button></div>
+<div id="msg" class="small">Loading the Madden Greats list...</div>
+<table id="out"></table>
+<script>
+var ALL=[], RN=[], RIDX={}, POS=${JSON.stringify(POS)};
+var RFULL={SPD:'Speed',ACC:'Acceleration',AGI:'Agility',STR:'Strength',AWR:'Awareness',CTH:'Catching',CAR:'Carrying',BTK:'Break tackle',
+  JMP:'Jumping',THP:'Throw power',THA:'Throw accuracy',PBK:'Pass block',RBK:'Run block',TAK:'Tackling',KPW:'Kick power',KAC:'Kick accuracy',
+  KR:'Kick return',STA:'Stamina',INJ:'Injury',TGH:'Toughness',HGT:'Height (inches)',WGT:'Weight (lbs)',AGE:'Age'};
+var OL=['PBK','RBK','STR','AWR','AGI','ACC','SPD'], DL=['TAK','STR','SPD','ACC','AGI','AWR'], LB=['TAK','SPD','STR','AWR','ACC','AGI','CTH','JMP'],
+    DB=['SPD','ACC','AGI','CTH','JMP','TAK','AWR','KR','STR'];
+var POSRAT={QB:['THP','THA','AWR','SPD','AGI','ACC','STR','BTK','CAR'],HB:['SPD','ACC','AGI','BTK','CAR','CTH','STR','AWR','JMP','KR'],
+  FB:['RBK','BTK','CAR','STR','SPD','ACC','CTH','PBK','AWR'],WR:['SPD','ACC','AGI','CTH','JMP','AWR','CAR','BTK','KR','STR'],
+  TE:['CTH','RBK','PBK','STR','SPD','ACC','JMP','AWR','BTK'],LT:OL,LG:OL,C:OL,RG:OL,RT:OL,LE:DL,RE:DL,DT:DL,
+  LOLB:LB,MLB:LB,ROLB:LB,CB:DB,FS:DB,SS:DB,K:['KPW','KAC','AWR'],P:['KPW','KAC','AWR']};
+var ALWAYS=['STA','INJ','TGH','HGT','WGT','AGE'];
+function fillRatings(){
+  var pos=el('pos').value, list=pos&&POSRAT[pos]? POSRAT[pos].concat(ALWAYS): RN;
+  list=list.filter(function(c){return c in RIDX});
+  ['r1','r2'].forEach(function(id){
+    var cur=el(id).value, sel=el(id);
+    if(sel.dataset.pos===pos && sel.options.length>1) return;
+    sel.innerHTML='<option value="">(none)</option>'+list.map(function(c){return '<option value="'+c+'">'+(RFULL[c]||c)+' ('+c+')</option>'}).join('');
+    sel.value=list.indexOf(cur)>=0?cur:''; sel.dataset.pos=pos;
+  });
+}
+POS.forEach(function(p){var o=document.createElement('option');o.value=o.textContent=p;document.getElementById('pos').appendChild(o);});
+function el(id){return document.getElementById(id)}
+function refreshSel(){
+  google.script.run.withSuccessHandler(function(s){
+    if(!s.ok){el('sel').textContent=s.msg;return}
+    el('sel').innerHTML='Adding to <b>row '+s.row+'</b>'+(s.name?' - '+s.name:'')+(s.pos?' ('+s.pos+')':' (no position yet)');
+    if(s.pos && el('pos').dataset.auto!=='off'){el('pos').value=s.pos;}
+    fillRatings();
+    run();
+  }).getSelectedRow();
+}
+google.script.run.withSuccessHandler(function(d){
+  if(Array.isArray(d)){ALL=d;RN=[];}else{ALL=d.rows;RN=d.names;}
+  RN.forEach(function(c,i){RIDX[c]=7+i});
+  if(!RN.length) el('ratbox').style.display='none';
+  fillRatings();
+  el('msg').textContent=ALL.length+' versions loaded. Fill any boxes; results update as you type.';refreshSel();}).getGreats();
+setInterval(refreshSel,4000);
+['q','team','yr','jer','ovr','r1min','r1max','r2min','r2max'].forEach(function(id){el(id).addEventListener('input',run)});
+['r1','r2'].forEach(function(id){el(id).addEventListener('change',run)});
+el('pos').addEventListener('change',function(){el('pos').dataset.auto='off';fillRatings();run()});
+el('hof').addEventListener('change',run);
+function run(){
+  if(!ALL.length)return;
+  var q=el('q').value.trim().toLowerCase().replace(/\s+/g,' '), pos=el('pos').value, team=el('team').value.trim().toLowerCase();
+  var yr=el('yr').value.trim(), jer=el('jer').value.trim(), ovr=parseInt(el('ovr').value,10), hof=el('hof').checked;
+  var yy=yr? yr.slice(-2):'';
+  var yrRe=yy? new RegExp("(^|[ '])"+yy+"( |$)"):null;
+  var jerRe=jer? new RegExp('#'+jer+'(\\D|$)'):null;
+  var hasCols=ALL.length&&ALL[0].length>6;
+  function rf(id){var c=el(id).value; if(!c||!(c in RIDX))return null;
+    var lo=parseInt(el(id+'min').value,10), hi=parseInt(el(id+'max').value,10); return {c:c,i:RIDX[c],lo:lo,hi:hi};}
+  var F=[rf('r1'),rf('r2')].filter(Boolean), sortBy=rf('r1')||rf('r2');
+  var out=[], cap=sortBy?1e9:150;
+  for(var i=0;i<ALL.length&&out.length<cap;i++){
+    var r=ALL[i], label=String(r[0]), t=String(r[3]);
+    if(pos&&r[1]!==pos)continue;
+    if(q&&label.toLowerCase().replace(/\s+/g,' ').indexOf(q)<0)continue;
+    if(team&&t.toLowerCase().indexOf(team)<0)continue;
+    if(yr){ if(hasCols&&r[6]!==''){ if(yr.length===4? String(r[6])!==yr : String(r[6]).slice(-2)!==yy) continue; } else if(!yrRe.test(t)) continue; }
+    if(jer){ if(hasCols&&r[5]!==''){ if(String(r[5])!==String(parseInt(jer,10))) continue; } else if(!jerRe.test(String(r[4]))) continue; }
+    if(!isNaN(ovr)&&Number(r[2])<ovr)continue;
+    if(hof&&t.indexOf('Hall of Fame')<0)continue;
+    var okR=true;
+    for(var f=0;f<F.length;f++){var v=Number(r[F[f].i]); if(!isNaN(F[f].lo)&&v<F[f].lo){okR=false;break} if(!isNaN(F[f].hi)&&v>F[f].hi){okR=false;break}}
+    if(!okR)continue;
+    out.push(r);
+  }
+  var total=out.length;
+  if(sortBy){ out.sort(function(a,b){return Number(b[sortBy.i])-Number(a[sortBy.i]) || Number(b[2])-Number(a[2])}); out=out.slice(0,150); }
+  var h=out.map(function(r,k){
+    var extra=F.map(function(f){return f.c+' '+r[f.i]}).join(' &middot; ');
+    return '<tr><td class="n">'+r[2]+'</td><td>'+esc(r[0])+(r[5]!==''&&r[5]!==undefined?' <span class="small">#'+r[5]+'</span>':'')+(extra?'<br><span class="small"><b>'+extra+'</b></span>':'')+'</td><td><button data-k="'+k+'">Use</button></td></tr>'}).join('');
+  el('out').innerHTML=h;
+  el('msg').className='small';
+  el('msg').textContent=out.length? (sortBy? (total>150?total+' matches; showing the top 150 by '+sortBy.c+'.':total+' match(es), best '+sortBy.c+' first.') : (out.length>=150?'Showing the first 150. Add more boxes to narrow it.':out.length+' match(es).')):'No matches. Try fewer boxes.';
+  Array.prototype.forEach.call(el('out').querySelectorAll('button'),function(b){
+    b.onclick=function(){var r=out[+b.dataset.k];el('msg').textContent='Saving...';
+      google.script.run.withSuccessHandler(function(res){el('msg').className=res.ok?'ok':'err';el('msg').textContent=res.msg;refreshSel();}).useClone(r[0],r[1]);};
+  });
+}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+function look(where){
+  var n=el('real').value.trim()||el('q').value.trim(); if(!n){el('real').focus();return}
+  var t=el('rteam').value.trim();
+  var u= where==='pfr' ? 'https://www.pro-football-reference.com/search/search.fcgi?search='+encodeURIComponent(n)
+       : 'https://www.google.com/search?q='+encodeURIComponent(n+(t?', '+t:'')+', jersey number, madden, position');
+  window.open(u,'_blank');
+}
+function copyDown(){
+  var n=el('real').value.trim(), t=el('rteam').value.trim();
+  if(n){var parts=n.split(/\s+/); el('q').value=parts[parts.length-1];}
+  el('team').value=t;
+  el('pos').value=''; el('pos').dataset.auto='off'; fillRatings();
+  run(); el('q').focus();
+}
+function clearAll(){
+  ['q','team','yr','jer','ovr','real','rteam','r1min','r1max','r2min','r2max'].forEach(function(id){el(id).value=''});
+  el('hof').checked=false; el('pos').dataset.auto='on'; el('pos').value='';
+  el('r1').value=''; el('r2').value=''; fillRatings();
+  el('out').innerHTML=''; refreshSel();
+}
+</script></body></html>`;
