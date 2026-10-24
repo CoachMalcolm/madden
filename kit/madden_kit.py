@@ -300,7 +300,19 @@ def main(argv):
 
 
 if __name__ == '__main__':
-    code = main(sys.argv[1:])
+    # Always show what happened and wait, so the window never just vanishes.
+    try:
+        code = main(sys.argv[1:])
+    except SystemExit as e:
+        code = e.code if isinstance(e.code, int) else 1
+        if isinstance(e.code, str):
+            say(); say(e.code)
+    except BaseException:
+        import traceback
+        code = 1
+        say(); say('Something went wrong. Please send this to Malcolm:'); say(traceback.format_exc())
+    if code:
+        say(); say('Nothing was built.')
     if FROZEN or os.environ.get('MADDEN_PAUSE'):
         ask('\nPress Enter to close.')
     sys.exit(code)
