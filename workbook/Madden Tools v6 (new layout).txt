@@ -1452,7 +1452,6 @@ function migRun(dest) {
   var td;
   try { td = migReadPlayers(target); } catch (e) { return { ok: false, msg: e.message }; }
   if (!td.newLayout || td.col.first !== PC.first - 1 || td.col.picked !== PC.picked - 1 || td.col.affil !== PC.affil - 1) return { ok: false, msg: '"' + target.getName() + '" uses the old layout. Open it once with the new Madden Tools script and migrate it first.' };
-  var have = {}; td.rows.forEach(function (o) { have[migKey(o)] = true; });
   // re-read every player from his source list, plus his Custom Players row
   var bySrc = {}, srcData = {}, skipped = [], moved = [], today = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'M/d/yyyy');
   ready.forEach(function (r) { var o = migObj(r); (bySrc[o.fromId] = bySrc[o.fromId] || []).push(o); });
@@ -1464,25 +1463,46 @@ function migRun(dest) {
       .forEach(function (c) { if (c[0]) cus[String(c[0]).toLowerCase()] = c; });
     srcData[id] = { name: sss.getName(), map: map, cus: cus };
   });
+  var picks = [];
+  Object.keys(bySrc).forEach(function (id) {
+    bySrc[id].forEach(function (o) {
+      var cur = srcData[id].map[migKey(o)];
+      if (!cur) { skipped.push(o.first + ' ' + o.last + ': no longer on "' + srcData[id].name + '"'); return; }
+      picks.push({ cur: cur, cu: srcData[id].cus[migKey(cur)], from: srcData[id].name });
+    });
+  });
+  var res = migAppend(target, td, picks, today);
+  moved = res.moved; skipped = skipped.concat(res.skipped);
+  if (moved.length) migWrite(rd, [], false);
+  var customAdds = res.custom;
+  var msg = moved.length + ' player' + (moved.length === 1 ? '' : 's') + ' migrated to "' + target.getName() + '".' +
+    (customAdds ? ' ' + customAdds + ' custom (B/C) row' + (customAdds === 1 ? '' : 's') + ' copied too.' : '') +
+    (skipped.length ? '\n\nSkipped (' + skipped.length + '):\n- ' + skipped.join('\n- ') : '') +
+    (moved.length ? '\n\nPut them on squads in column N of the new list. Their clone lists and colors fix themselves the next time it opens.' : '');
+  return { ok: moved.length > 0, msg: msg, url: target.getUrl(), name: target.getName() };
+}
+
+// Writes players into a new-layout list. picks: [{cur, cu, from}] (cur = player read by migReadPlayers, cu = Custom Players row).
+// Skips names already there (same first, last, position). Adds missing Bones places to its Settings list.
+function migAppend(target, td, picks, today) {
+  var have = {}; td.rows.forEach(function (o) { have[migKey(o)] = true; });
+  var moved = [], skipped = [], custom = 0;
   var pv = td.sheet, cols = td.col, firstRow = td.headRow + 1;
   var used = pv.getRange(firstRow, cols.first + 1, LAST_ROW - firstRow + 1, 2).getValues(), free = [];
   used.forEach(function (u, i) { if (String(u[0]).trim() === '' && String(u[1]).trim() === '') free.push(firstRow + i); });
   var st = target.getSheetByName('Settings'), bonesR = st ? st.getRange(BONES_FIRST, 3, BONES_LAST - BONES_FIRST + 1, 1) : null;
   var bones = bonesR ? bonesR.getValues().map(function (b) { return String(b[0]).trim(); }) : [];
   var tcs = target.getSheetByName(CUSTOM_TAB), customAdds = [];
-  Object.keys(bySrc).forEach(function (id) {
-    bySrc[id].forEach(function (o) {
-      var who = o.first + ' ' + o.last + (o.pos ? ' (' + o.pos + ')' : ''), cur = srcData[id].map[migKey(o)];
-      if (!cur) { skipped.push(who + ': no longer on "' + srcData[id].name + '"'); return; }
+  picks.forEach(function (pk) {
+      var cur = pk.cur, cu = pk.cu, who = cur.first + ' ' + cur.last + (cur.pos ? ' (' + cur.pos + ')' : '');
       if (!cur.first || !cur.last) { skipped.push(who + ': needs a first and last name'); return; }
       if (have[migKey(cur)]) { skipped.push(who + ': already on "' + target.getName() + '"'); return; }
-      var cu = srcData[id].cus[migKey(cur)];
       if (cu) { var bad = []; for (var c = 5; c < 28; c++) { var v = cu[c]; if (v !== '' && v !== null && (isNaN(Number(v)) || Number(v) < 0 || Number(v) !== Math.floor(Number(v)))) bad.push(v); }
         if (bad.length) { skipped.push(who + ': his custom numbers are broken (' + bad.slice(0, 3).join(', ') + ')'); return; } }
       if (!free.length) { skipped.push(who + ': "' + target.getName() + '" is full (1,500 players)'); return; }
       var row = free.shift(), b = String(cur.bones).trim();
       if (b && bones.indexOf(b) < 0) { var e = bones.indexOf(''); if (e >= 0) { bones[e] = b; } }
-      var src = String(cur.source || '').trim(), note = 'Migrated from ' + srcData[id].name + ', ' + today;
+      var src = String(cur.source || '').trim(), note = (pk.note || 'Migrated from') + ' ' + pk.from + ', ' + today;
       var vals = { first: cur.first, last: cur.last, season: cur.season, jersey: cur.jersey, pos: cur.pos, profile: cur.profile,
         bones: cur.bones, clone: cur.clone, picked: cur.picked, source: src ? src + '; ' + note : note, squads: '', skin: cur.skin, affil: cur.affil };
       // two blocks, so the Clone check formula column (K) is never written to
@@ -1490,17 +1510,10 @@ function migRun(dest) {
       pv.getRange(row, cols.picked + 1, 1, 5).setValues([[vals.picked, vals.source, vals.squads, vals.skin, vals.affil]]);
       if (cu) customAdds.push(cu);
       have[migKey(cur)] = true; moved.push(who);
-    });
   });
   if (bonesR) bonesR.setValues(bones.map(function (b) { return [b]; }));
   if (customAdds.length && tcs) customAdds.forEach(function (c) { tcs.appendRow(c.slice(0, tcs.getMaxColumns())); });
-  if (moved.length) migWrite(rd, [], false);
-  else if (skipped.length) { /* keep the list so nothing is lost */ }
-  var msg = moved.length + ' player' + (moved.length === 1 ? '' : 's') + ' migrated to "' + target.getName() + '".' +
-    (customAdds.length ? ' ' + customAdds.length + ' custom (B/C) row' + (customAdds.length === 1 ? '' : 's') + ' copied too.' : '') +
-    (skipped.length ? '\n\nSkipped (' + skipped.length + '):\n- ' + skipped.join('\n- ') : '') +
-    (moved.length ? '\n\nPut them on squads in column N of the new list. Their clone lists and colors fix themselves the next time it opens.' : '');
-  return { ok: moved.length > 0, msg: msg, url: target.getUrl(), name: target.getName() };
+  return { moved: moved, skipped: skipped, custom: customAdds.length };
 }
 
 var MIG_HTML = String.raw`<!doctype html>
@@ -1542,3 +1555,4 @@ el('add').onclick=function(){run('migAddTicked',undefined,'Adding...')};
 el('rm').onclick=function(){run('migRemoveTicked',undefined,'Removing...')};
 el('go').onclick=function(){var d=val('dst');run('migRun',d==='new'?{mode:'new',name:el('newName').value}:{mode:'existing',url:el('dstLink').value},'Migrating... (a new workbook takes about 20 seconds)')};
 </script></body></html>`;
+

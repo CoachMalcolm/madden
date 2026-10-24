@@ -84,6 +84,7 @@ th{font-family:var(--display);font-weight:600;letter-spacing:.03em;font-size:1re
   <p class="meta">Updated October 24, 2026 · <a href="./">Back to the User Guide</a></p>
 </header>
 
+<div id="lists">
 <article class="list">
   <span class="yard">LIST 1</span>
   <h2>Master Madden List</h2>
@@ -112,6 +113,15 @@ th{font-family:var(--display);font-weight:600;letter-spacing:.03em;font-size:1re
   <a class="copy" href="https://docs.google.com/spreadsheets/d/1KF9t2CENZqvkc9za8tHhAGjFQ2uW3r9DGJ6e2QSUd6I/copy">Make a copy</a>
 </article>
 
+</div>
+
+<section class="topic" id="share" hidden>
+  <span class="yard">SHARE YOURS</span>
+  <h2>Add players or make your list public</h2>
+  <p>Use the <a id="formLink" href="#">submit form</a>: send your players to the Master Madden List, or make your own list public (at least 22 players, a title and a description). An automatic check runs every hour and emails you the result.</p>
+  <p class="proof">House rules: no offensive, sexual or hateful names or words; no private details about real people; no spam. Lists reported by 3 people are taken down.</p>
+</section>
+
 <section class="topic">
   <span class="yard">AFTER YOU COPY</span>
   <h2>Three quick things</h2>
@@ -123,5 +133,27 @@ th{font-family:var(--display);font-weight:600;letter-spacing:.03em;font-size:1re
   <p class="proof">Player counts: players with a name on the Players tab, and those with a clone picked (ready to build). The Starter's NFL players are the different players in its Madden Greats tab (30,527 versions across 1995–2026 rosters and the Hall of Fame lists).</p>
 </section>
 </div>
+
+<script>
+// Reads the Public Madden Lists catalog (a Google Sheet anyone can view). If it can't be reached, the cards above stay as they are.
+var CATALOG_ID = '';
+function esc(t){return String(t==null?'':t).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+function rowsOf(r){return (r.table.rows||[]).map(function(x){return (x.c||[]).map(function(c){return c?(c.v==null?'':c.v):''})})}
+function catalog(r){
+  var rows=rowsOf(r).filter(function(x){return x[0]&&x[7]==='live'}); if(!rows.length)return;
+  var html=rows.map(function(x,i){var kind=x[10],n=Number(x[2])||0;
+    var stats=kind==='starter'?'<div class="stat"><b>0</b><span>players of your own yet</span></div><div class="stat"><b>13,066</b><span>real NFL players to clone</span></div>'
+      :'<div class="stat"><b>'+n.toLocaleString()+'</b><span>players</span></div>';
+    var desc=String(x[3]).split(/\n\s*\n/).map(function(p){return '<p>'+esc(p)+'</p>'}).join('');
+    var rep=kind==='public'&&window.REPORT?' <a class="meta" href="'+esc(window.REPORT.replace('CODE',x[0]))+'">Report this list</a>':'';
+    return '<article class="list"><span class="yard">LIST '+(i+1)+(kind==='public'?' · '+esc(x[0])+' · shared by '+esc(x[5]):'')+'</span><h2>'+esc(x[1])+'</h2><div class="stats">'+stats+'</div><div class="desc">'+desc+'</div><a class="copy" href="'+esc(x[4])+'">Make a copy</a>'+rep+'</article>'}).join('');
+  document.getElementById('lists').innerHTML=html;
+}
+function config(r){var m={};rowsOf(r).forEach(function(x){m[x[0]]=x[1]});
+  if(m.formUrl){document.getElementById('formLink').href=m.formUrl;document.getElementById('share').hidden=false}
+  window.REPORT=m.reportUrl||'';
+  var s=document.createElement('script');s.src='https://docs.google.com/spreadsheets/d/'+CATALOG_ID+'/gviz/tq?sheet=Catalog&tqx=responseHandler:catalog';document.body.appendChild(s)}
+if(CATALOG_ID){var s=document.createElement('script');s.src='https://docs.google.com/spreadsheets/d/'+CATALOG_ID+'/gviz/tq?sheet=Config&tqx=responseHandler:config';document.body.appendChild(s)}
+</script>
 </body>
 </html>

@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="How the Madden lists keep working on their own, and the two account settings that keep them alive.">
+<title>Keeping It Running</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+a{color:var(--turf);font-weight:700}
+/* Layout: one readable column like a coach's binder; every topic = a plain summary, then fold-outs that open in place. */
+:root{
+  --bg:#f6f7f3; --paper:#ffffff; --ink:#1b2219; --muted:#5b6658; --line:#d9ddd2;
+  --turf:#2f5d3a; --turf-soft:#e6efe5; --chalk:#b8860b; --warn-bg:#fbefe0; --warn:#8a4b08;
+  --code-bg:#eef1ea;
+  --display:"Barlow Condensed","Arial Narrow",Arial,sans-serif;
+  --body:"Atkinson Hyperlegible",Verdana,Arial,sans-serif;
+  --mono:"JetBrains Mono",Consolas,"Courier New",monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#121611; --paper:#1a2019; --ink:#e7ebe3; --muted:#a3ad9f; --line:#2f382d;
+  --turf:#8cc79a; --turf-soft:#1f2e22; --chalk:#e0b84f; --warn-bg:#2e2213; --warn:#f0b56a; --code-bg:#20281f; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#121611; --paper:#1a2019; --ink:#e7ebe3; --muted:#a3ad9f; --line:#2f382d;
+  --turf:#8cc79a; --turf-soft:#1f2e22; --chalk:#e0b84f; --warn-bg:#2e2213; --warn:#f0b56a; --code-bg:#20281f; color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.6;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 64px}
+.wrap{max-width:46rem;margin:0 auto;display:flex;flex-direction:column;gap:22px}
+header.top{display:flex;flex-direction:column;gap:6px;padding-bottom:14px;border-bottom:3px solid var(--turf)}
+.eyebrow{font-family:var(--display);letter-spacing:.12em;text-transform:uppercase;color:var(--turf);font-size:.95rem;font-weight:700}
+h1{font-family:var(--display);font-weight:700;font-size:2.6rem;line-height:1.05;margin:0;text-wrap:balance}
+h2{font-family:var(--display);font-weight:700;font-size:1.75rem;line-height:1.1;margin:0;text-wrap:balance}
+h3{font-family:var(--display);font-weight:600;font-size:1.3rem;margin:0}
+p{margin:0}
+.lead{font-size:1.1rem}
+.meta{color:var(--muted);font-size:.92rem}
+section.topic{background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:20px 20px 18px;display:flex;flex-direction:column;gap:12px}
+.yard{font-family:var(--mono);font-size:.8rem;color:var(--chalk);letter-spacing:.04em}
+.howto{display:flex;flex-direction:column;gap:12px}
+details.more{border-top:1px dashed var(--line);padding-top:10px}
+details.more>summary{cursor:pointer;list-style:none;color:var(--turf);font-weight:700;display:inline-flex;gap:8px;align-items:center;padding:4px 0}
+details.more>summary::-webkit-details-marker{display:none}
+details.more>summary::before{content:"▸";display:inline-block;transition:transform .15s}
+details.more[open]>summary::before{transform:rotate(90deg)}
+details.more>summary:focus-visible,button:focus-visible{outline:3px solid var(--chalk);outline-offset:2px;border-radius:3px}
+.inner{display:flex;flex-direction:column;gap:12px;padding:10px 0 4px 14px;border-left:3px solid var(--turf-soft);margin-top:6px}
+details.more details.more{border-top:none;padding-top:0}
+details.more details.more>summary{font-weight:600;font-size:.95rem}
+.hide{align-self:flex-start;background:none;border:1px solid var(--line);color:var(--muted);font:inherit;font-size:.88rem;padding:3px 10px;border-radius:4px;cursor:pointer}
+.hide:hover{color:var(--ink);border-color:var(--muted)}
+ul,ol{margin:0;padding-left:1.3rem;display:flex;flex-direction:column;gap:6px}
+code,.mono{font-family:var(--mono);font-size:.86em;background:var(--code-bg);padding:1px 5px;border-radius:3px;overflow-wrap:anywhere}
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:.93rem;font-variant-numeric:tabular-nums}
+th,td{text-align:left;padding:7px 9px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:var(--display);font-weight:600;letter-spacing:.03em;font-size:1rem;color:var(--muted)}
+.callout{background:var(--warn-bg);color:var(--ink);border-radius:5px;padding:12px 14px;display:flex;flex-direction:column;gap:6px}
+.callout strong{color:var(--warn)}
+.proof{font-size:.93rem;color:var(--muted)}
+.tools{display:flex;gap:10px;flex-wrap:wrap}
+.tools button{background:var(--turf);color:var(--paper);border:0;border-radius:4px;padding:6px 12px;font:inherit;font-size:.9rem;cursor:pointer}
+.tools button.alt{background:none;color:var(--turf);border:1px solid var(--turf)}
+@media (max-width:480px){h1{font-size:2.1rem}section.topic{padding:16px 14px}}
+@media (prefers-reduced-motion:reduce){details.more>summary::before{transition:none}}
+
+.list{background:var(--paper);border:1px solid var(--line);border-left:6px solid var(--turf);border-radius:6px;padding:20px;display:flex;flex-direction:column;gap:12px}
+.stats{display:flex;gap:10px;flex-wrap:wrap}
+.stat{background:var(--turf-soft);border-radius:5px;padding:8px 12px;display:flex;flex-direction:column;min-width:8.5rem}
+.stat b{font-family:var(--display);font-size:1.7rem;line-height:1;color:var(--turf);font-variant-numeric:tabular-nums}
+.stat span{font-size:.85rem;color:var(--muted)}
+.copy{align-self:flex-start;display:inline-block;background:var(--turf);color:var(--paper);text-decoration:none;font-weight:700;padding:9px 16px;border-radius:5px}
+.copy:hover{filter:brightness(1.1)}
+.copy:focus-visible{outline:3px solid var(--chalk);outline-offset:2px}
+.desc{display:flex;flex-direction:column;gap:10px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="top">
+  <span class="eyebrow">Madison Madden 08 · For Malcolm</span>
+  <h1>Keeping it running</h1>
+  <p class="lead">Submissions, the public lists and this website run by themselves. Nobody has to approve anything. They only need two accounts to stay alive.</p>
+  <p class="meta">Updated October 24, 2026 · <a href="./">User Guide</a> · <a href="lists.html">Lists</a></p>
+</header>
+<section class="topic">
+  <span class="yard">WHAT RUNS BY ITSELF</span>
+  <h2>Every hour, automatically</h2>
+  <ul>
+    <li>The <strong>Madden Submissions</strong> script (a separate script in Malcolm's Google account) reads the submit form.</li>
+    <li>Players sent to the Master are checked (name, position, Clone check OK, house rules, no duplicates) and added.</li>
+    <li>Lists sent to be public are checked (22+ players, title, description, house rules, no broken players), copied into the <strong>Public Madden Lists</strong> folder and listed on the lists page.</li>
+    <li>Reports are counted. Three reports from different people take a list down.</li>
+    <li>Everyone gets an email with the result.</li>
+  </ul>
+</section>
+<section class="topic">
+  <span class="yard">ONCE · GOOGLE</span>
+  <h2>Google: Inactive Account Manager</h2>
+  <p>Google can delete an account that isn't used for 2 years, which would stop everything. <strong>Inactive Account Manager</strong> lets you choose people who get access to your Drive (the workbooks, the folder and the script) if the account goes quiet.</p>
+  <p>Set it up at <a href="https://myaccount.google.com/inactive">myaccount.google.com/inactive</a>.</p>
+</section>
+<section class="topic">
+  <span class="yard">ONCE · GITHUB</span>
+  <h2>GitHub: account successor</h2>
+  <p>This website and the Roster Kit live in the <code>CoachMalcolm/madden</code> repository. GitHub lets you name a <strong>successor</strong> who can take over your repositories.</p>
+  <p>Set it up in GitHub: <strong>Settings › Account › Successor settings</strong> (<a href="https://github.com/settings/admin">github.com/settings/admin</a>).</p>
+</section>
+</div>
+</body>
+</html>
