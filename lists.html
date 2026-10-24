@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="The Madden NFL 08 PC player lists you can copy: what is in each one, how many players, and a Make a copy button.">
+<title>Madden Lists to Copy</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+a{color:var(--turf);font-weight:700}
+/* Layout: one readable column like a coach's binder; every topic = a plain summary, then fold-outs that open in place. */
+:root{
+  --bg:#f6f7f3; --paper:#ffffff; --ink:#1b2219; --muted:#5b6658; --line:#d9ddd2;
+  --turf:#2f5d3a; --turf-soft:#e6efe5; --chalk:#b8860b; --warn-bg:#fbefe0; --warn:#8a4b08;
+  --code-bg:#eef1ea;
+  --display:"Barlow Condensed","Arial Narrow",Arial,sans-serif;
+  --body:"Atkinson Hyperlegible",Verdana,Arial,sans-serif;
+  --mono:"JetBrains Mono",Consolas,"Courier New",monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#121611; --paper:#1a2019; --ink:#e7ebe3; --muted:#a3ad9f; --line:#2f382d;
+  --turf:#8cc79a; --turf-soft:#1f2e22; --chalk:#e0b84f; --warn-bg:#2e2213; --warn:#f0b56a; --code-bg:#20281f; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#121611; --paper:#1a2019; --ink:#e7ebe3; --muted:#a3ad9f; --line:#2f382d;
+  --turf:#8cc79a; --turf-soft:#1f2e22; --chalk:#e0b84f; --warn-bg:#2e2213; --warn:#f0b56a; --code-bg:#20281f; color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.6;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 64px}
+.wrap{max-width:46rem;margin:0 auto;display:flex;flex-direction:column;gap:22px}
+header.top{display:flex;flex-direction:column;gap:6px;padding-bottom:14px;border-bottom:3px solid var(--turf)}
+.eyebrow{font-family:var(--display);letter-spacing:.12em;text-transform:uppercase;color:var(--turf);font-size:.95rem;font-weight:700}
+h1{font-family:var(--display);font-weight:700;font-size:2.6rem;line-height:1.05;margin:0;text-wrap:balance}
+h2{font-family:var(--display);font-weight:700;font-size:1.75rem;line-height:1.1;margin:0;text-wrap:balance}
+h3{font-family:var(--display);font-weight:600;font-size:1.3rem;margin:0}
+p{margin:0}
+.lead{font-size:1.1rem}
+.meta{color:var(--muted);font-size:.92rem}
+section.topic{background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:20px 20px 18px;display:flex;flex-direction:column;gap:12px}
+.yard{font-family:var(--mono);font-size:.8rem;color:var(--chalk);letter-spacing:.04em}
+.howto{display:flex;flex-direction:column;gap:12px}
+details.more{border-top:1px dashed var(--line);padding-top:10px}
+details.more>summary{cursor:pointer;list-style:none;color:var(--turf);font-weight:700;display:inline-flex;gap:8px;align-items:center;padding:4px 0}
+details.more>summary::-webkit-details-marker{display:none}
+details.more>summary::before{content:"▸";display:inline-block;transition:transform .15s}
+details.more[open]>summary::before{transform:rotate(90deg)}
+details.more>summary:focus-visible,button:focus-visible{outline:3px solid var(--chalk);outline-offset:2px;border-radius:3px}
+.inner{display:flex;flex-direction:column;gap:12px;padding:10px 0 4px 14px;border-left:3px solid var(--turf-soft);margin-top:6px}
+details.more details.more{border-top:none;padding-top:0}
+details.more details.more>summary{font-weight:600;font-size:.95rem}
+.hide{align-self:flex-start;background:none;border:1px solid var(--line);color:var(--muted);font:inherit;font-size:.88rem;padding:3px 10px;border-radius:4px;cursor:pointer}
+.hide:hover{color:var(--ink);border-color:var(--muted)}
+ul,ol{margin:0;padding-left:1.3rem;display:flex;flex-direction:column;gap:6px}
+code,.mono{font-family:var(--mono);font-size:.86em;background:var(--code-bg);padding:1px 5px;border-radius:3px;overflow-wrap:anywhere}
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:.93rem;font-variant-numeric:tabular-nums}
+th,td{text-align:left;padding:7px 9px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:var(--display);font-weight:600;letter-spacing:.03em;font-size:1rem;color:var(--muted)}
+.callout{background:var(--warn-bg);color:var(--ink);border-radius:5px;padding:12px 14px;display:flex;flex-direction:column;gap:6px}
+.callout strong{color:var(--warn)}
+.proof{font-size:.93rem;color:var(--muted)}
+.tools{display:flex;gap:10px;flex-wrap:wrap}
+.tools button{background:var(--turf);color:var(--paper);border:0;border-radius:4px;padding:6px 12px;font:inherit;font-size:.9rem;cursor:pointer}
+.tools button.alt{background:none;color:var(--turf);border:1px solid var(--turf)}
+@media (max-width:480px){h1{font-size:2.1rem}section.topic{padding:16px 14px}}
+@media (prefers-reduced-motion:reduce){details.more>summary::before{transition:none}}
+
+.list{background:var(--paper);border:1px solid var(--line);border-left:6px solid var(--turf);border-radius:6px;padding:20px;display:flex;flex-direction:column;gap:12px}
+.stats{display:flex;gap:10px;flex-wrap:wrap}
+.stat{background:var(--turf-soft);border-radius:5px;padding:8px 12px;display:flex;flex-direction:column;min-width:8.5rem}
+.stat b{font-family:var(--display);font-size:1.7rem;line-height:1;color:var(--turf);font-variant-numeric:tabular-nums}
+.stat span{font-size:.85rem;color:var(--muted)}
+.copy{align-self:flex-start;display:inline-block;background:var(--turf);color:var(--paper);text-decoration:none;font-weight:700;padding:9px 16px;border-radius:5px}
+.copy:hover{filter:brightness(1.1)}
+.copy:focus-visible{outline:3px solid var(--chalk);outline-offset:2px}
+.desc{display:flex;flex-direction:column;gap:10px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="top">
+  <span class="eyebrow">Madison Madden 08 · Lists</span>
+  <h1>Pick a list to copy</h1>
+  <p class="lead">Each list is a Google Sheets workbook. Click <strong>Make a copy</strong> and Google puts your own copy in your Google Drive. It's yours to change; nothing you do touches the original.</p>
+  <p class="meta">Updated October 24, 2026 · <a href="./">Back to the User Guide</a></p>
+</header>
+
+<article class="list">
+  <span class="yard">LIST 1</span>
+  <h2>Master Madden List</h2>
+  <div class="stats">
+    <div class="stat"><b>264</b><span>players</span></div>
+    <div class="stat"><b>155</b><span>ready to play (clone picked)</span></div>
+  </div>
+  <div class="desc">
+    <p>Version 1 of the Master List (Oct '26). This list has teammates and friends of mine from Little League through high school and my 1990 season at Glassboro State College. I also included Madison legends and standout players from the 70s to today. You will also find standout players from NJ who played around the late 80s and early 90s. This list is ongoing and will be added to over time. Every player on this list was created by cloning a Madden Great – everyone is good.</p>
+    <p>The goal of this project is to enjoy playing with created players from the past. It is meant to honor the many players we looked up to as kids and cheered for as adults. We all love ball, and this is a celebration of ball.</p>
+    <p>Feel free to add, remove, edit, create and organize your own copy of this list as you see fit. Enjoy!</p>
+  </div>
+  <a class="copy" href="https://docs.google.com/spreadsheets/d/1QM60wATNZpLcZ7qnPwyZnNrF453RjxbMuUBvKlPXsfI/copy">Make a copy</a>
+</article>
+
+<article class="list">
+  <span class="yard">LIST 2</span>
+  <h2>Master Madden List Starter (blank)</h2>
+  <div class="stats">
+    <div class="stat"><b>0</b><span>players of your own yet</span></div>
+    <div class="stat"><b>13,066</b><span>real NFL players to clone</span></div>
+  </div>
+  <div class="desc">
+    <p>This is a blank list that includes only real NFL players that appeared in Madden. Start with this if you want to build your own players.</p>
+  </div>
+  <a class="copy" href="https://docs.google.com/spreadsheets/d/1KF9t2CENZqvkc9za8tHhAGjFQ2uW3r9DGJ6e2QSUd6I/copy">Make a copy</a>
+</article>
+
+<section class="topic">
+  <span class="yard">AFTER YOU COPY</span>
+  <h2>Three quick things</h2>
+  <ol>
+    <li>Rename your copy: <strong>[Your name]'s Madden List</strong>.</li>
+    <li>Open <strong>READ ME FIRST</strong> in the workbook. It explains every tab.</li>
+    <li>The first time you use the <strong>Madden Tools</strong> menu, Google asks you to allow it. That is the workbook's own script.</li>
+  </ol>
+  <p class="proof">Player counts: players with a name on the Players tab, and those with a clone picked (ready to build). The Starter's NFL players are the different players in its Madden Greats tab (30,527 versions across 1995–2026 rosters and the Hall of Fame lists).</p>
+</section>
+</div>
+</body>
+</html>

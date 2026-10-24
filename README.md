@@ -8,7 +8,7 @@ Put the people you played with and against into **Madden NFL 08 (PC)**. Each per
 
 | Piece | What it is | Where |
 |---|---|---|
-| Master Madden List v6 | Google Sheet: players, custom players, squads, rosters, matchups, Community Pool | [Make your own copy](https://docs.google.com/spreadsheets/d/1oWacpslQbD5xzF-0GAfb7CrIAhQ-AIoXba38ctx5G14/copy) |
+| Madden Lists (Google Sheets) | Players, custom players, squads, rosters, matchups. Start from the Master Madden List or the blank Starter | [Pick a list to copy](https://coachmalcolm.github.io/madden/lists.html) |
 | Madden Tools | The workbook's menu (Apps Script). It comes with the copy. | Inside the workbook |
 | Madden Roster Kit | Program for your PC that turns the workbook into a `.ros` roster file | [Download the latest](https://github.com/CoachMalcolm/madden/releases/latest) (`MaddenRosterKit-windows.zip`), or the source in `kit/` |
 | User Guide | Step-by-step help, 8 steps | `index.html` → the link above |
