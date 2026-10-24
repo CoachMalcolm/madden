@@ -223,6 +223,9 @@ def gather(args):
             files.append(it)
         else:
             sys.exit('Can\'t find "%s". Drag the file into this window, or paste a Google Sheets link.' % it)
+    if any(f.lower().endswith('.ros') for f in files):
+        sys.exit('That is a roster file (.ros): what this program makes, not what it reads. '
+                 'Give me your workbook instead: its Google Sheets link, or File > Download > Microsoft Excel (.xlsx).')
     xl = [f for f in files if f.lower().endswith('.xlsx')]
     cs = [f for f in files if f.lower().endswith('.csv')]
     if xl:
@@ -264,11 +267,20 @@ def main(argv):
     name = None
     if len(rest) >= 2 and re.fullmatch(r'[A-Za-z0-9 ]{1,12}', rest[-1]) and not os.path.exists(unquote(rest[-1])):
         name = rest.pop()
-    if not rest:
-        say('Paste your Google Sheets link, or drag your workbook (.xlsx) or CSV files into this window,')
-        src = ask('then press Enter: ')
-        rest = re.findall(r'"[^"]+"|\S+', src)
-    kind, src = gather(rest)
+    if rest:
+        kind, src = gather(rest)
+    else:
+        # Ask until we get something usable, so one wrong file doesn't end the program.
+        while True:
+            say('Paste your Google Sheets link, or drag your workbook (.xlsx) or CSV files into this window,')
+            got = ask('then press Enter: ').strip()
+            if not got:
+                sys.exit('Nothing given.')
+            try:
+                kind, src = gather(re.findall(r'"[^"]+"|\S+', got))
+                break
+            except SystemExit as e:
+                say(); say(e.code if isinstance(e.code, str) else 'That didn\'t work.'); say('Try again.'); say()
     if not name:
         name = ask('Roster name, letters and numbers only, 8 or fewer (e.g. SQUADS1): ')
     name = re.sub(r'[^A-Za-z0-9]', '', name or '')[:8] or 'ROSTER'
