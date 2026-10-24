@@ -124,7 +124,63 @@ def read_workbook(path):
             notes.append('%d player(s) are on squad "%s", which is not a squad on Build Your Squads '
                          '(misspelled, renamed, or past the Number of squads); left out. Players rows: %s'
                          % (len(lines), nm, ', '.join(map(str, lines[:12])) + (' ...' if len(lines) > 12 else '')))
+    custom = read_custom(wb, notes)
+    for p in players:
+        c = custom.get((p['first'].lower(), p['last'].lower(), p['pos']))
+        if c:
+            p['custom'] = c
     return settings, need, squads, players, notes
+
+
+CUSTOM_TAB = 'Custom Players'
+CUSTOM_FIELDS = {'height': 'HGT', 'weight': 'WGT', 'age': 'AGE'}
+
+
+def read_custom(wb, notes):
+    """Custom Players tab (optional): one row per player whose ratings were set by hand.
+    Type A = start from his clone and change some ratings; type B = from scratch (no clone).
+    Blank cells keep the default (the clone's number for A, the average player at that position for B)."""
+    if CUSTOM_TAB not in wb.sheets:
+        return {}
+    cp = wb.sheet(CUSTOM_TAB)
+    head = {c: clean(v) for (r, c), v in cp.items() if r == 0}
+    col = {}
+    for c, h in head.items():
+        low = h.lower()
+        m = re.search(r'\(([A-Z]{2,3})\)\s*$', h)
+        if m:
+            col[c] = m.group(1)
+        elif low.startswith('first'):
+            col[c] = 'first'
+        elif low.startswith('last'):
+            col[c] = 'last'
+        elif low.startswith('position'):
+            col[c] = 'pos'
+        elif low.startswith('type'):
+            col[c] = 'type'
+        else:
+            for word, key in CUSTOM_FIELDS.items():
+                if low.startswith(word):
+                    col[c] = key
+    out = {}
+    nrows = max((r for r, _ in cp), default=0) + 1
+    for r in range(1, nrows):
+        row = {key: cp.get((r, c), '') for c, key in col.items()}
+        first, last, pos = clean(row.get('first')), clean(row.get('last')), clean(row.get('pos'))
+        kind = clean(row.get('type')).upper()[:1]
+        if not (first or last) or kind not in ('A', 'B'):
+            continue
+        vals = {}
+        for key, v in row.items():
+            if key in ('first', 'last', 'pos', 'type') or clean(v) == '':
+                continue
+            n = num(v, None)
+            if n is None:
+                notes.append('Custom Players row %d (%s %s): "%s" is not a number for %s; using the default.' % (r + 1, first, last, v, key))
+                continue
+            vals[key] = n
+        out[(first.lower(), last.lower(), pos)] = dict(type=kind, vals=vals, line=r + 1)
+    return out
 
 
 def find_row_layout(sq):
@@ -151,6 +207,55 @@ def find_row_layout(sq):
     if not count or count < 1:
         sys.exit('Build Your Squads: set the Number of squads (1 to 32) at the top of the tab.')
     return hdr, cols, int(count)
+
+
+CP = json.load(open(os.path.join(KIT, 'data', 'custom_players.json')))
+RAW = {'SPD': 'PSPD', 'ACC': 'PACC', 'AGI': 'PAGI', 'STR': 'PSTR', 'AWR': 'PAWR', 'CTH': 'PCTH', 'CAR': 'PCAR',
+       'BTK': 'PBTK', 'JMP': 'PJMP', 'THP': 'PTHP', 'THA': 'PTHA', 'PBK': 'PPBK', 'RBK': 'PRBK', 'TAK': 'PTAK',
+       'KPW': 'PKPR', 'KAC': 'PKAC', 'KR': 'PKRT', 'STA': 'PSTA', 'INJ': 'PINJ', 'TGH': 'PTGH',
+       'HGT': 'PHGT', 'WGT': 'PWGT', 'AGE': 'PAGE'}
+
+
+def custom_ovr(pos, e, capped=True):
+    """EA's overall formula for the position (fitted on EA's own rosters), capped 0-99."""
+    w = CP['model'][pos]
+    v = sum(e[k] * w[i] for i, k in enumerate(CP['keys'])) + w[-1]
+    return max(0, min(99, int(round(v)))) if capped else v
+
+
+def custom_entry(e, cu, pos, cap):
+    """The clone (A) or the average-player template (B) with the saved numbers on top."""
+    out = dict(e)
+    if cu['type'] == 'B':
+        out.update(CP['avg'][pos])               # every number starts at the position's average
+    for k, v in cu['vals'].items():
+        if k in RAW:
+            out[k] = max(0, min(cap if k in CP['keys'] else 400, int(v)))
+    if cu['type'] == 'B':
+        out['ovr'] = custom_ovr(pos, out)
+    elif any(k in CP['keys'] for k in cu['vals']):
+        # A: keep the clone's own overall and move it by however much the changes move EA's formula,
+        # so a clone from a community roster (rated a little differently) isn't re-rated from scratch.
+        out['ovr'] = max(0, min(99, int(round(e['ovr'] + custom_ovr(pos, out, False) - custom_ovr(pos, e, False)))))
+    out['custom'] = cu['type']
+    return out
+
+
+def apply_custom(d, P2, PF2, idx, created, mine):
+    """Write custom ratings, height, weight, age and the new overall into each custom player's record."""
+    said = []
+    for (pgid, tg, pos, ovr, name, kr), (p, e) in zip(created, mine):
+        if not e.get('custom'):
+            continue
+        i = idx[pgid]; rec = B.rec_of(bytes(d), P2, i)
+        vals = {RAW[k]: e[k] for k in RAW if k in e}
+        vals['PWGT'] = max(0, e['WGT'] - 160)      # stored as pounds over 160
+        vals['POVR'] = e['ovr']
+        for f, v in vals.items():
+            ty, bo, _, bc = PF2[f]; rec = setbits(rec, bo, bc, min(int(v), (1 << bc) - 1))
+        d[P2.dataoff + i * P2.reclen:P2.dataoff + (i + 1) * P2.reclen] = rec
+        said.append('%s (%s): %s, OVR %d' % (name, pos, 'from scratch' if e['custom'] == 'B' else 'custom ratings on %s' % p['clone'], e['ovr']))
+    return said
 
 
 def op_list(e, op):
@@ -289,7 +394,7 @@ def main():
     # Empty squads (placeholders, or squads whose players have no ready clone yet) are skipped, not errors.
     on_squad, ready_on = collections.Counter(), collections.Counter()
     for p in players:
-        ok = p['check'].upper().startswith('OK') and bool(p['clone'])
+        ok = p['check'].upper().startswith('OK') and (bool(p['clone']) or p.get('custom', {}).get('type') == 'B')
         for k in set(p['ticks']):
             on_squad[k] += 1
             ready_on[k] += ok
@@ -328,9 +433,15 @@ def main():
                 continue
             if k not in named:
                 warns.append('%s is ticked for squad slot %d, which has no name; ignored.' % (who, k)); continue
-            if not p['check'].upper().startswith('OK') or not p['clone']:
+            cu = p.get('custom')
+            scratch = bool(cu and cu['type'] == 'B')
+            if not p['check'].upper().startswith('OK') or not (p['clone'] or scratch):
                 skipped.append('%s on %s: no valid clone yet' % (who, squads[k - 1]['name'])); continue
-            e = greats.get(p['clone'])
+            if scratch and p['pos'] not in CP['template']:
+                errors.append('%s: a from-scratch player needs a Position (F)' % who); continue
+            e = greats.get(CP['template'][p['pos']] if scratch else p['clone'])
+            if cu:
+                e = custom_entry(e, cu, p['pos'], settings['cap'])
             if not e:
                 errors.append('%s: clone "%s" is not in the ratings database' % (who, p['clone'])); continue
             if e['pos'] != p['pos']:
@@ -428,7 +539,7 @@ def main():
         s = pl['squad']; t = teams[s['replaces']]
         full = (t['TLNA'] + ' ' + t['TDNA']).strip()      # build_showdown looks teams up by full name
         for p, e in pl['mine']:
-            rows.append([p['first'], p['last'], p['jersey'], p['pos'], p['clone'], full])
+            rows.append([p['first'], p['last'], p['jersey'], p['pos'], e['label'], full])
         renames[full] = ((s['city'] or t['TLNA'])[:17], (s['nick'] or s['name'])[:16], 'XXX')
     B.SRC['__v6base__'] = tmp_base
     out_ros = os.path.join(KIT, 'output', a.name + '.ros'); tmp = out_ros + '.tmp'
@@ -457,6 +568,7 @@ def main():
             new_face = pool[zlib.crc32(('%s %s' % (p['first'], p['last'])).lower().encode('utf-8')) % len(pool)]
             ty, bo, _, bc = PF2['PFEx']; rec = setbits(rec, bo, bc, new_face); faces += 1
         d[P2.dataoff + i * P2.reclen:P2.dataoff + (i + 1) * P2.reclen] = rec
+    customs = apply_custom(d, P2, PF2, idx, created, [(p, e) for slot, pl in plan.items() for p, e in pl['mine']])
     fix_crcs(d); open(out_ros, 'wb').write(d)
     filled = fill_depth(out_ros, [teams[pl['squad']['replaces']]['TGID'] for pl in plan.values()])
     ok = verify(out_ros)
@@ -464,6 +576,10 @@ def main():
     say(); say('BUILT: %s  (%d players, checksums %s, %d bytes)' % (os.path.basename(out_ros), len(created),
                                                                  'valid' if ok else 'BAD', os.path.getsize(out_ros)))
     say('  skin tone set on %d players (%d given a face of that skin tone); %d empty depth-chart spots filled' % (skins, faces, filled))
+    if customs:
+        say('  custom players: %d' % len(customs))
+        for x in customs:
+            say('    - ' + x)
     for p in problems:
         say('  problem: ' + p)
     for x in short:

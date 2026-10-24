@@ -1,6 +1,13 @@
 # Changelog
 
-## v1.0, October 23, 2026 (night): Roster Kit release
+## v1.0, October 24, 2026: custom players and Community Pool
+- **Custom players.** Madden Tools › Create or edit a custom player opens a panel: **A** start from his clone and change only what's different (quick), or **B** from scratch with no clone (more involved). Height, weight and skin tone first, then ratings most important first for his position. Save any time; anything left alone stays at the default (his clone's number, or the average NFL player at his position).
+- Overall ratings use EA's own formula per position, worked out from EA's 2003-2007 rosters (matches every EA player to within 1 point). Type A moves the clone's overall by the change; type B is worked out from all his numbers.
+- New **Custom Players** tab stores what was saved; the Clone check reads "OK: … (custom ratings)" or "OK: … (custom, from scratch)".
+- **Community Pool.** Submit a player (emails Malcolm a code), Add a pool submission (Master only), and Add a player from the Community Pool (one click into your own copy).
+- Roster Kit builds custom players (tested: A and B both written into the roster; workbooks without custom players still build byte-identical rosters).
+
+## October 23, 2026 (night): Roster Kit
 - New one-file Windows program, MaddenRosterKit.exe (built on GitHub; no Python needed).
 - One front door for every input: Google Sheets link, .xlsx, the tab CSVs, or an old v5 list.
 - Output goes into month folders (output\YYYYMM); older files are sorted in too.

@@ -36,7 +36,7 @@ import build_showdown, clone, crcs, sanitize, tdb, xlsx  # noqa: E402,F401
 
 OUT = os.path.join(KIT, 'output')
 INPUT = os.path.join(KIT, 'input')
-TABS = ('Settings', 'Build Your Squads', 'Players')
+TABS = ('Settings', 'Build Your Squads', 'Players', 'Custom Players')
 
 # Settings used when the CSVs don't include the Settings tab (the workbook's own defaults).
 DEFAULT_NEED = [('QB', 1), ('HB', 1), ('FB', 1), ('WR', 3), ('TE', 1), ('LT', 1), ('LG', 1), ('C', 1), ('RG', 1),
@@ -180,7 +180,7 @@ def csvs_to_xlsx(files):
         tabs['Settings'] = default_settings_rows()
     os.makedirs(INPUT, exist_ok=True)
     out = os.path.join(INPUT, 'from CSV files.xlsx')
-    sheets = ['Settings', 'Build Your Squads', 'Players']
+    sheets = ['Settings', 'Build Your Squads', 'Players'] + (['Custom Players'] if 'Custom Players' in tabs else [])
     with zipfile.ZipFile(out, 'w', zipfile.ZIP_DEFLATED) as z:
         z.writestr('[Content_Types].xml',
                    '<?xml version="1.0" encoding="UTF-8"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'

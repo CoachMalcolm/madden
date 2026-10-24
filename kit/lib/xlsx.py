@@ -42,7 +42,7 @@ class Workbook:
             t = c.get('t'); v = c.find('m:v', NS)
             if t == 'inlineStr':
                 val = ''.join(x.text or '' for x in c.iter('{%s}t' % NS['m']))
-            elif v is None:
+            elif v is None or v.text is None:          # formula with no saved value
                 continue
             elif t == 's':
                 val = self.strings[int(v.text)]
